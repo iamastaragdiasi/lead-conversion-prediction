@@ -1,0 +1,261 @@
+{
+    "final_model": "Logistic Regression",
+    "decision_threshold": 0.32,
+    "tuned_random_forest_best_params": {
+        "max_depth": 10,
+        "min_samples_leaf": 10,
+        "min_samples_split": 10,
+        "n_estimators": 300
+    },
+    "tuned_random_forest_grid_cv_roc_auc": 0.6794,
+    "models": {
+        "logistic_regression": {
+            "label": "Logistic Regression",
+            "train_roc_auc": 0.7083,
+            "cv_roc_auc": 0.6985,
+            "cv_threshold": 0.32,
+            "test_at_0_50": {
+                "threshold": 0.5,
+                "accuracy": 0.6783,
+                "precision": 0.6553,
+                "recall": 0.5498,
+                "f1": 0.5979,
+                "roc_auc": 0.7317,
+                "brier_score": 0.2064,
+                "confusion_matrix": [
+                    [
+                        527,
+                        151
+                    ],
+                    [
+                        235,
+                        287
+                    ]
+                ]
+            },
+            "test_at_own_cv_threshold": {
+                "threshold": 0.32,
+                "accuracy": 0.6067,
+                "precision": 0.5291,
+                "recall": 0.8697,
+                "f1": 0.658,
+                "roc_auc": 0.7317,
+                "brier_score": 0.2064,
+                "confusion_matrix": [
+                    [
+                        274,
+                        404
+                    ],
+                    [
+                        68,
+                        454
+                    ]
+                ]
+            }
+        },
+        "decision_tree": {
+            "label": "Decision Tree",
+            "train_roc_auc": 0.707,
+            "cv_roc_auc": 0.6263,
+            "cv_threshold": 0.2,
+            "test_at_0_50": {
+                "threshold": 0.5,
+                "accuracy": 0.6492,
+                "precision": 0.6292,
+                "recall": 0.4713,
+                "f1": 0.5389,
+                "roc_auc": 0.663,
+                "brier_score": 0.2269,
+                "confusion_matrix": [
+                    [
+                        533,
+                        145
+                    ],
+                    [
+                        276,
+                        246
+                    ]
+                ]
+            },
+            "test_at_own_cv_threshold": {
+                "threshold": 0.2,
+                "accuracy": 0.475,
+                "precision": 0.4506,
+                "recall": 0.9444,
+                "f1": 0.6101,
+                "roc_auc": 0.663,
+                "brier_score": 0.2269,
+                "confusion_matrix": [
+                    [
+                        77,
+                        601
+                    ],
+                    [
+                        29,
+                        493
+                    ]
+                ]
+            }
+        },
+        "random_forest": {
+            "label": "Random Forest",
+            "train_roc_auc": 0.8206,
+            "cv_roc_auc": 0.6794,
+            "cv_threshold": 0.37,
+            "test_at_0_50": {
+                "threshold": 0.5,
+                "accuracy": 0.6525,
+                "precision": 0.5897,
+                "recall": 0.6609,
+                "f1": 0.6233,
+                "roc_auc": 0.7239,
+                "brier_score": 0.2168,
+                "confusion_matrix": [
+                    [
+                        438,
+                        240
+                    ],
+                    [
+                        177,
+                        345
+                    ]
+                ]
+            },
+            "test_at_own_cv_threshold": {
+                "threshold": 0.37,
+                "accuracy": 0.5525,
+                "precision": 0.4922,
+                "recall": 0.91,
+                "f1": 0.6389,
+                "roc_auc": 0.7239,
+                "brier_score": 0.2168,
+                "confusion_matrix": [
+                    [
+                        188,
+                        490
+                    ],
+                    [
+                        47,
+                        475
+                    ]
+                ]
+            }
+        },
+        "tuned_random_forest": {
+            "label": "Tuned Random Forest",
+            "train_roc_auc": 0.8206,
+            "cv_roc_auc": 0.6794,
+            "cv_threshold": 0.37,
+            "test_at_0_50": {
+                "threshold": 0.5,
+                "accuracy": 0.6525,
+                "precision": 0.5897,
+                "recall": 0.6609,
+                "f1": 0.6233,
+                "roc_auc": 0.7239,
+                "brier_score": 0.2168,
+                "confusion_matrix": [
+                    [
+                        438,
+                        240
+                    ],
+                    [
+                        177,
+                        345
+                    ]
+                ]
+            },
+            "test_at_own_cv_threshold": {
+                "threshold": 0.37,
+                "accuracy": 0.5525,
+                "precision": 0.4922,
+                "recall": 0.91,
+                "f1": 0.6389,
+                "roc_auc": 0.7239,
+                "brier_score": 0.2168,
+                "confusion_matrix": [
+                    [
+                        188,
+                        490
+                    ],
+                    [
+                        47,
+                        475
+                    ]
+                ]
+            }
+        }
+    },
+    "permutation_importance": [
+        {
+            "feature": "lead_source",
+            "importance_mean": 0.0576,
+            "importance_std": 0.0076
+        },
+        {
+            "feature": "quotation_sent",
+            "importance_mean": 0.0455,
+            "importance_std": 0.0065
+        },
+        {
+            "feature": "previous_customer",
+            "importance_mean": 0.0308,
+            "importance_std": 0.007
+        },
+        {
+            "feature": "demo_attended",
+            "importance_mean": 0.0273,
+            "importance_std": 0.0053
+        },
+        {
+            "feature": "response_time_hours",
+            "importance_mean": 0.0166,
+            "importance_std": 0.0043
+        },
+        {
+            "feature": "quotation_value",
+            "importance_mean": 0.0131,
+            "importance_std": 0.0025
+        },
+        {
+            "feature": "company_size",
+            "importance_mean": 0.0123,
+            "importance_std": 0.0039
+        },
+        {
+            "feature": "interactions",
+            "importance_mean": 0.0059,
+            "importance_std": 0.0035
+        },
+        {
+            "feature": "followups",
+            "importance_mean": 0.0044,
+            "importance_std": 0.0015
+        },
+        {
+            "feature": "industry",
+            "importance_mean": 0.0035,
+            "importance_std": 0.0035
+        },
+        {
+            "feature": "salesperson_experience",
+            "importance_mean": 0.002,
+            "importance_std": 0.0013
+        },
+        {
+            "feature": "lead_age_days",
+            "importance_mean": 0.0005,
+            "importance_std": 0.001
+        },
+        {
+            "feature": "website_visits",
+            "importance_mean": 0.0,
+            "importance_std": 0.0001
+        },
+        {
+            "feature": "location",
+            "importance_mean": -0.0007,
+            "importance_std": 0.0014
+        }
+    ]
+}
