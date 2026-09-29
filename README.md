@@ -1,291 +1,207 @@
 # Lead Conversion Prediction Engine
 
-A reproducible machine learning system for estimating the probability that a sales lead will convert into a customer.
+A reproducible machine learning pipeline that estimates the probability that a sales lead will convert into a customer, and turns it into a prediction and a Low / Medium / High potential category.
 
-The project covers the complete workflow from synthetic data generation and exploratory analysis to model training, evaluation, threshold analysis, model serialization, and FastAPI-based prediction.
+```text
+Conversion Probability : 66.2%
+Prediction             : Likely to Convert
+Category               : MEDIUM POTENTIAL
+```
+
+The prediction comes from a trained model, not from hand-written rules. No external LLM APIs, paid AI services, API keys or company data are used.
 
 ---
 
 ## Project Overview
 
-The Lead Conversion Prediction Engine predicts the probability of lead conversion using information available before the conversion outcome is known.
+A business receives many leads and has limited sales time. This project learns from historical (synthetic) lead data which leads are most likely to convert, so the team can call the best leads first.
 
-The system provides:
-
-- Conversion probability
-- Conversion percentage
-- Binary conversion prediction
-- Deployment threshold
-- Conversion potential category
-
-The final system uses a **Tuned Random Forest** model with a deployment threshold of **0.42**.
-
----
-
-## Final Model
-
-| Component | Result |
+| Item | Value |
 |---|---|
-| Model | Tuned Random Forest |
-| Raw input features | 14 |
-| Processed features | 33 |
-| Deployment threshold | 0.42 |
-| Analysis best F1 | 0.6572 |
-| Test Accuracy | 0.6483 |
-| Test Precision | 0.5868 |
-| Test Recall | 0.6475 |
-| Test F1-score | 0.6157 |
-| Test ROC-AUC | 0.7220 |
+| Final model | **Logistic Regression** (preprocessing + model saved as one Joblib pipeline) |
+| Model selection | Highest 5-fold cross-validated ROC-AUC on the training set |
+| Decision threshold | **0.32** (maximum F1 on out-of-fold training predictions; test set not used) |
+| Raw input features | 14 (33 after encoding) |
+| Dataset | 6,000 cleaned synthetic leads (6,020 raw), 43.5% converted |
+| Test ROC-AUC | 0.7317 |
+| Test recall / precision / F1 at 0.32 | 0.8697 / 0.5291 / 0.6580 |
 
----
-
-## Input Features
-
-### Categorical Features
-
-- `lead_source`
-- `industry`
-- `location`
-- `company_size`
-
-### Numerical Features
-
-- `lead_age_days`
-- `interactions`
-- `followups`
-- `response_time_hours`
-- `quotation_sent`
-- `quotation_value`
-- `website_visits`
-- `previous_customer`
-- `demo_attended`
-- `salesperson_experience`
-
-`lead_id` is excluded from predictive modelling because it is an identifier rather than a predictive feature.
-
----
-
-## Machine Learning Workflow
+Workflow:
 
 ```text
-Synthetic Dataset
-       ↓
-Data Quality Validation
-       ↓
-Exploratory Data Analysis
-       ↓
-Leakage Analysis
-       ↓
-Train/Test Split
-       ↓
-Leakage-Safe Preprocessing
-       ↓
-Model Training
-       ↓
-Model Comparison
-       ↓
-Random Forest Tuning
-       ↓
-Threshold Analysis
-       ↓
-Final Model
-       ↓
-Joblib Serialization
-       ↓
-Prediction Engine
-       ↓
-FastAPI
+Generate data → Validate & clean → EDA → Leakage review → Stratified 80/20 split
+→ Pipeline (impute + scale + one-hot + model) → 5-fold CV model comparison
+→ Select model → Select threshold (training data only) → Final test evaluation
+→ Feature importance → Save pipeline (Joblib) → CLI predictor / FastAPI
 ```
 
 ---
 
-## Models Evaluated
+## Requirements
 
-The project evaluates the required classification models:
-
-1. Logistic Regression
-2. Decision Tree
-3. Random Forest
-
-Random Forest was subsequently tuned and used as the final model.
-
-## Final Model Selection
-
-The tuned Random Forest was selected as the final model after comparing Logistic Regression, Decision Tree and Random Forest using the required evaluation metrics.
-
-The selection considered predictive performance on the held-out test set, the balance between precision and recall reflected by F1-score, ROC-AUC, generalisation to unseen data, the ability to capture nonlinear relationships, feature-importance analysis, and the usefulness of conversion probabilities for lead prioritisation.
-
-Accuracy was not treated as the sole selection criterion because it can be misleading when the target classes are imbalanced.
-
-The final model and preprocessing artifacts are saved using Joblib and can be loaded by the prediction engine without retraining.
+- Python 3.11+ (developed and tested with Python 3.13)
+- Libraries (pinned in `requirements.txt`): pandas, NumPy, scikit-learn, Joblib, SciPy, Matplotlib, Seaborn, Jupyter
+- Optional, for the web API: FastAPI, Uvicorn, Pydantic (also in `requirements.txt`)
 
 ---
 
-## Preprocessing
+## Installation
 
-The preprocessing pipeline uses separate transformations for numerical and categorical features.
+```bash
+git clone https://github.com/iamastaragdiasi/lead-conversion-prediction.git
+cd lead-conversion-prediction
 
-### Numerical Features
+python -m venv .venv
+```
 
-- Median imputation
-- Standard scaling
+Activate the virtual environment:
 
-### Categorical Features
+```bash
+# Windows (PowerShell)
+.venv\Scripts\Activate.ps1
 
-- Most-frequent imputation
-- One-hot encoding
+# macOS / Linux
+source .venv/bin/activate
+```
+
+Install the dependencies:
+
+```bash
+pip install -r requirements.txt
+```
+
+All commands below are run from the project root.
 
 ---
 
-## Threshold Analysis
+## Dataset
 
-The model produces a probability of conversion.
+The dataset is **synthetic** and generated locally by `src/generate_data.py` (seed 42), so anyone can recreate it exactly. The generated files are also committed in `data/`.
 
-Threshold analysis identified:
+- **Size:** 6,020 raw records → 6,000 after removing 20 exact duplicates.
+- **Target:** `converted` (1 = converted, 0 = not converted), 43.5% positive.
+- **How conversion is generated:** a logistic function of lead source, industry, company size, interactions, follow-ups, response time, quotation sent and value, website visits, previous-customer status, demo attendance and salesperson experience, plus random noise. It is not random numbers.
+- **Injected data-quality issues** (to demonstrate cleaning): about 1% missing values in five columns, 10 negative lead ages, 10 negative response times and 20 duplicate rows.
 
-- Best analysis threshold: `0.42`
-- Analysis best F1-score: approximately `0.6572`
-
-The deployment threshold is therefore `0.42`.
-
----
-
-## Conversion Potential Categories
-
-| Probability | Category |
+| Categorical features | Numerical features |
 |---|---|
-| `< 0.40` | Low Conversion Potential |
-| `0.40 – < 0.70` | Medium Conversion Potential |
-| `>= 0.70` | High Conversion Potential |
+| `lead_source`, `industry`, `location`, `company_size` | `lead_age_days`, `interactions`, `followups`, `response_time_hours`, `quotation_sent`, `quotation_value`, `website_visits`, `previous_customer`, `demo_attended`, `salesperson_experience` |
+
+`lead_id` is an identifier and is excluded from modelling.
 
 ---
 
 ## How to Train
 
-The project includes scripts for synthetic dataset generation and data-quality validation.
-
-From the project root:
-
 ```bash
-python src/generate_data.py
-python src/validate_data.py
+python src/generate_data.py    # creates data/raw/leads_raw.csv (6,020 rows)
+python src/validate_data.py    # creates data/processed/leads_validated.csv (6,000 rows)
+python src/train.py            # trains, compares and saves the model (about 1–2 minutes)
 ```
+
+`src/train.py`:
+
+1. Splits the data 80/20, stratified on `converted`.
+2. Builds one scikit-learn `Pipeline` per model (median imputation + scaling for numbers, most-frequent imputation + one-hot encoding for categories, then the classifier), so preprocessing is fitted on training data only.
+3. Compares **Logistic Regression, Decision Tree, Random Forest** and a **GridSearchCV-tuned Random Forest** with 5-fold cross-validation on the training set.
+4. Selects the model with the highest cross-validated ROC-AUC.
+5. Selects the decision threshold from out-of-fold training predictions (maximum F1).
+6. Evaluates every model once on the untouched test set.
+7. Saves:
+   - `models/lead_conversion_pipeline.joblib` (preprocessing + model)
+   - `models/model_metadata.json` (features, threshold, categories, metrics)
+   - `reports/metrics.json` (all model results and feature importance)
+   - figures in `reports/figures/`
+
+The notebook `notebooks/lead_analysis.ipynb` contains the full EDA and runs the same modelling code step by step (**Kernel → Restart & Run All**).
 
 ---
 
 ## How to Evaluate
 
-The complete evaluation is documented in:
-
-`reports/evaluation_report.md`
-
-The evaluation covers:
-
-- Accuracy
-- Precision
-- Recall
-- F1-score
-- ROC-AUC
-- Model comparison
-- Threshold analysis
-- Feature analysis
-- Final model selection
-- Limitations
-
-### Final Test Results
-
-| Metric | Result |
-|---|---:|
-| Accuracy | 0.6483 |
-| Precision | 0.5868 |
-| Recall | 0.6475 |
-| F1-score | 0.6157 |
-| ROC-AUC | 0.7220 |
-
-The deployment threshold is `0.42`, with an analysis best F1-score of approximately `0.6572`.
+- Training prints the comparison table and final metrics to the console.
+- `reports/evaluation_report.md` is the full evaluation: metric definitions, why accuracy is not enough, leakage review, model comparison, confusion matrices, model selection, threshold analysis, feature importance and limitations.
+- `reports/metrics.json` holds all the numbers.
+- `reports/figures/` holds the ROC curves, precision-recall curves, confusion matrices, threshold analysis, permutation importance and coefficient plots.
 
 ---
 
-## Prediction Engine
+## How to Predict
 
-The reusable prediction engine is implemented in:
+The predictor loads the saved pipeline. It never retrains.
 
-`src/predictor.py`
+```bash
+python src/predict.py              # interactive: asks for each lead detail
+python src/predict.py --example    # scores a built-in example lead
+python src/predict.py --input lead.json
+python src/predict.py --csv leads.csv   # batch scoring → leads_scored.csv
+```
 
-It:
+Example `lead.json`:
 
-1. Accepts raw lead information.
-2. Validates the expected features.
-3. Applies the saved preprocessing pipeline.
-4. Generates a conversion probability.
-5. Applies the deployment threshold.
-6. Produces the predicted class.
-7. Assigns a conversion-potential category.
+```json
+{
+  "lead_source": "Website", "industry": "Retail", "location": "Bengaluru",
+  "company_size": "Medium", "lead_age_days": 20, "interactions": 6, "followups": 3,
+  "response_time_hours": 2.0, "quotation_sent": 1, "quotation_value": 85000,
+  "website_visits": 5, "previous_customer": 0, "demo_attended": 1,
+  "salesperson_experience": 6
+}
+```
 
-The prediction engine loads the saved artifacts and does not retrain the model during prediction.
+Example output:
 
----
+```text
+============================================
+       LEAD CONVERSION PREDICTOR
+============================================
+Lead source             : Website
+Industry                : Retail
+Location                : Bengaluru
+Company size            : Medium
+Lead age                : 20
+Interactions            : 6
+Follow-ups              : 3
+First response time     : 2.0
+Quotation sent          : Yes
+Quotation value         : 85000
+Website visits          : 5
+Previous customer       : No
+Demo attended           : Yes
+Salesperson experience  : 6
+--------------------------------------------
+Conversion Probability  : 66.2%
+Prediction              : Likely to Convert
+Category                : MEDIUM POTENTIAL
+Decision threshold      : 0.32
+Model                   : Logistic Regression
+============================================
+```
 
-## FastAPI API
+From Python:
 
-A FastAPI layer exposes the prediction engine through HTTP.
+```python
+from src.predictor import predict_lead
+predict_lead({...})   # returns probability, percentage, class, label, threshold, category
+```
 
-Implementation:
-
-`src/api.py`
-
-### Endpoints
-
-#### `GET /`
-
-Provides basic API information.
-
-#### `GET /health`
-
-Checks model and prediction-service availability.
-
-#### `POST /predict`
-
-Accepts lead information and returns the prediction.
-
-The API uses Pydantic validation for incoming requests.
-
----
-
-## Running the API
-
-From the project root:
+### Optional: REST API
 
 ```bash
 uvicorn src.api:app --reload
 ```
 
----
+Open http://127.0.0.1:8000/docs for the Swagger UI. Endpoints: `GET /`, `GET /health`, `POST /predict`. Invalid input returns HTTP 422.
 
-## Model Artifacts
+### Conversion categories
 
-The final model artifacts are stored under:
+| Probability | Category | Basis |
+|---|---|---|
+| < 0.32 | Low Potential | Below the analysed decision threshold |
+| 0.32 – < 0.70 | Medium Potential | Between the threshold and 0.70 |
+| ≥ 0.70 | High Potential | Business convention, **not** statistically derived |
 
-`models/`
-
-### `preprocessor.joblib`
-
-Saved preprocessing pipeline.
-
-### `tuned_random_forest.joblib`
-
-Saved final Tuned Random Forest model.
-
-### `model_metadata.json`
-
-Contains:
-
-- Model type
-- Artifact names
-- Processed feature count
-- Analysis threshold
-- Analysis best F1-score
-- Final test metrics
+On the test set, High / Medium / Low leads actually converted at 84% / 49% / 20%.
 
 ---
 
@@ -293,197 +209,88 @@ Contains:
 
 ```text
 lead-conversion-prediction/
-│
 ├── data/
-│   ├── raw/
-│   │   └── leads_raw.csv
-│   └── processed/
-│       └── leads_validated.csv
-│
+│   ├── raw/leads_raw.csv                  # generated raw data (with quality issues)
+│   └── processed/leads_validated.csv      # cleaned data used for modelling
 ├── models/
-│   ├── preprocessor.joblib
-│   ├── tuned_random_forest.joblib
-│   └── model_metadata.json
-│
+│   ├── lead_conversion_pipeline.joblib    # preprocessing + final model
+│   └── model_metadata.json                # threshold, features, metrics
 ├── notebooks/
-│   └── lead_analysis.ipynb
-│
+│   └── lead_analysis.ipynb                # EDA + modelling experiments
 ├── reports/
-│   ├── evaluation_report.md
-│   ├── project_approach.md
-│   └── figures/
-│
+│   ├── evaluation_report.md               # full evaluation report
+│   ├── project_approach.md                # approach document
+│   ├── metrics.json                       # all model metrics
+│   └── figures/                           # EDA and evaluation charts
 ├── src/
-│   ├── api.py
-│   ├── generate_data.py
-│   ├── predictor.py
-│   └── validate_data.py
-│
-├── .gitignore
-├── README.md
-└── requirements.txt
+│   ├── generate_data.py                   # synthetic data generator
+│   ├── validate_data.py                   # data-quality checks and cleaning
+│   ├── train.py                           # training, comparison, selection, saving
+│   ├── predictor.py                       # prediction engine (loads saved pipeline)
+│   ├── predict.py                         # command-line predictor
+│   └── api.py                             # optional FastAPI service
+├── requirements.txt
+└── README.md
 ```
-
----
-
-## Dataset
-
-The project uses a locally generated synthetic dataset containing more than 5,000 lead records.
-
-The generator models realistic relationships between:
-
-- Lead source
-- Industry
-- Company size
-- Engagement
-- Response time
-- Quotation activity
-- Previous-customer status
-- Demo attendance
-- Salesperson experience
-- Conversion
-
-The dataset intentionally contains a small amount of missing data, duplicate records, and invalid values for data-quality analysis.
-
-No proprietary or confidential company data is required.
 
 ---
 
 ## Results
 
-The final Tuned Random Forest achieved the following results on the held-out test dataset:
+Test set (1,200 leads). Model comparison at the default 0.50 threshold; CV = 5-fold on the training set:
 
-| Metric | Result |
-|---|---:|
-| Accuracy | 0.6483 |
-| Precision | 0.5868 |
-| Recall | 0.6475 |
-| F1-score | 0.6157 |
-| ROC-AUC | 0.7220 |
+| Model | CV ROC-AUC | Accuracy | Precision | Recall | F1 | ROC-AUC |
+|---|---:|---:|---:|---:|---:|---:|
+| **Logistic Regression** | **0.6985** | 0.6783 | 0.6553 | 0.5498 | 0.5979 | **0.7317** |
+| Decision Tree | 0.6263 | 0.6492 | 0.6292 | 0.4713 | 0.5389 | 0.6630 |
+| Random Forest | 0.6794 | 0.6525 | 0.5897 | 0.6609 | 0.6233 | 0.7239 |
+| Tuned Random Forest | 0.6794 | 0.6525 | 0.5897 | 0.6609 | 0.6233 | 0.7239 |
 
-The deployment threshold is `0.42`, with an analysis best F1-score of approximately `0.6572`.
+Final model (Logistic Regression) at the decision threshold of **0.32**:
 
----
+| Accuracy | Precision | Recall | F1 | ROC-AUC |
+|---:|---:|---:|---:|---:|
+| 0.6067 | 0.5291 | 0.8697 | 0.6580 | 0.7317 |
 
-## Reproducibility
+It finds 454 of 522 real buyers (87%). The cost is lower precision: more calls to leads that do not buy. That trade-off is intentional, because a missed deal costs more than an extra call.
 
-The project uses a defined dependency set in:
+Why Logistic Regression: highest cross-validated and test ROC-AUC, almost no overfitting (the Random Forest overfits: train 0.82 vs CV 0.68), best-calibrated probabilities, fully interpretable and very cheap to run. Tuning the Random Forest did not improve it.
 
-`requirements.txt`
-
-The trained model and preprocessing pipeline are serialized using Joblib.
-
-The saved artifacts allow predictions to be made without retraining the model.
-
----
-
-## Evaluation Report
-
-The detailed evaluation report is available at:
-
-`reports/evaluation_report.md`
-
-The report documents:
-
-- Project overview
-- Dataset
-- Data quality
-- EDA
-- Leakage analysis
-- Preprocessing
-- Models evaluated
-- Final model
-- Threshold analysis
-- Test performance
-- Model artifacts
-- Prediction engine
-- FastAPI
-- API validation
-- Reproducibility
-- Limitations
-- Conclusion
+Most important features (permutation importance): lead source, quotation sent, previous customer, demo attended, response time. Location, lead age and website visits contribute almost nothing.
 
 ---
 
 ## Limitations
 
-### Synthetic Dataset
-
-The dataset is synthetic rather than real production lead data.
-
-Therefore, the reported metrics should not be interpreted as production-level performance on real company data.
-
-### Generalization
-
-Real-world lead behaviour may differ from the relationships represented in the synthetic dataset.
-
-### Model Performance
-
-The model should be considered a predictive prototype rather than a guaranteed conversion decision system.
-
-### Probability Interpretation
-
-The predicted probability is a model output and should not automatically be interpreted as a perfectly calibrated real-world probability.
-
-### Threshold
-
-The `0.42` threshold was selected through analysis on the project data. Production deployment would require validation using representative real-world data and an appropriate business objective.
+- **Synthetic data:** the results reflect the generator's assumptions, not a real market, and are not production performance.
+- **Modest accuracy:** ROC-AUC of about 0.73 gives useful ranking, but many individual predictions will be wrong.
+- **Near-linear data:** the generator is logistic, which favours Logistic Regression; real data may behave differently.
+- **Threshold objective:** 0.32 maximises F1; a real business should set it from the actual cost of a missed deal versus a wasted call.
+- **Quotation value imputation:** 28 leads with a sent quotation have a missing value that is imputed as 0.
+- **Leakage in real data:** activity features must be captured at prediction time, not after the deal closes.
+- **Probabilities** are not explicitly calibrated and will drift if customer behaviour changes.
 
 ---
 
 ## Future Improvements
 
-Possible future improvements include:
-
-- Evaluation using representative real-world lead data
-- Probability calibration
-- Additional cross-validation and robustness analysis
-- Further threshold validation using business objectives
-- Additional justified hyperparameter experimentation
-- Model monitoring after deployment
-- Data-drift monitoring
-- Automated model retraining
-- Production deployment and scaling
-- Authentication and authorization for the prediction API
-
-These are future directions and are not required components of the current project implementation.
+- Real, time-stamped CRM data with a time-based validation split.
+- Threshold chosen from business costs and sales capacity.
+- Probability calibration and calibration plots.
+- Gradient boosting comparison on real data.
+- Model versioning, monitoring, data-drift detection and scheduled retraining.
+- CRM integration for batch scoring, and API authentication.
 
 ---
 
 ## Technology Stack
 
-- Python
-- Pandas
-- NumPy
-- Matplotlib
-- Scikit-learn
-- Joblib
-- SciPy
-- Jupyter
-- FastAPI
-- Uvicorn
-- Pydantic
-- Git
+Python · pandas · NumPy · scikit-learn · Joblib · Matplotlib · Seaborn · Jupyter · Git · FastAPI / Uvicorn / Pydantic (optional API)
 
 ---
 
-## Project Status
+## Restrictions Followed
 
-**Completed**
-
-The repository contains:
-
-- Synthetic dataset generation
-- Data-quality validation
-- EDA and experimentation notebook
-- Leakage analysis
-- Leakage-safe preprocessing
-- Required model experiments
-- Tuned Random Forest
-- Threshold analysis
-- Saved model artifacts
-- Prediction engine
-- FastAPI prediction API
-- API validation
-- Evaluation report
-- Complete project documentation
+- No OpenAI, Gemini, Claude or other external LLM APIs.
+- No paid AI APIs or company-provided API keys.
+- No proprietary or confidential Codly data; all data is synthetic and generated locally.

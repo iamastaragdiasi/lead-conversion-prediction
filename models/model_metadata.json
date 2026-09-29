@@ -1,13 +1,91 @@
 {
-    "model_type": "Tuned Random Forest",
-    "model_file": "tuned_random_forest.joblib",
-    "preprocessor_file": "preprocessor.joblib",
-    "processed_feature_count": 33,
-    "analysis_threshold": 0.4199999999999998,
-    "analysis_best_f1": 0.657185628742515,
-    "test_accuracy": 0.6483333333333333,
-    "test_precision": 0.5868055555555556,
-    "test_recall": 0.6475095785440613,
-    "test_f1": 0.6156648451730419,
-    "test_roc_auc": 0.7219933543552708
+    "model_name": "Logistic Regression",
+    "model_key": "logistic_regression",
+    "pipeline_file": "lead_conversion_pipeline.joblib",
+    "features": [
+        "lead_source",
+        "industry",
+        "location",
+        "company_size",
+        "lead_age_days",
+        "interactions",
+        "followups",
+        "response_time_hours",
+        "quotation_sent",
+        "quotation_value",
+        "website_visits",
+        "previous_customer",
+        "demo_attended",
+        "salesperson_experience"
+    ],
+    "categorical_features": [
+        "lead_source",
+        "industry",
+        "location",
+        "company_size"
+    ],
+    "numerical_features": [
+        "lead_age_days",
+        "interactions",
+        "followups",
+        "response_time_hours",
+        "quotation_sent",
+        "quotation_value",
+        "website_visits",
+        "previous_customer",
+        "demo_attended",
+        "salesperson_experience"
+    ],
+    "decision_threshold": 0.32,
+    "threshold_method": "Maximum F1 on 5-fold out-of-fold predictions from the training set only",
+    "categories": {
+        "Low Potential": "probability < 0.32",
+        "Medium Potential": "0.32 <= probability < 0.70",
+        "High Potential": "probability >= 0.70"
+    },
+    "high_potential_cutoff": 0.7,
+    "selection_criterion": "Highest 5-fold cross-validated ROC-AUC on the training set",
+    "cv_roc_auc": 0.6985,
+    "test_metrics_at_decision_threshold": {
+        "threshold": 0.32,
+        "accuracy": 0.6067,
+        "precision": 0.5291,
+        "recall": 0.8697,
+        "f1": 0.658,
+        "roc_auc": 0.7317,
+        "brier_score": 0.2064,
+        "confusion_matrix": [
+            [
+                274,
+                404
+            ],
+            [
+                68,
+                454
+            ]
+        ]
+    },
+    "test_metrics_at_0_50": {
+        "threshold": 0.5,
+        "accuracy": 0.6783,
+        "precision": 0.6553,
+        "recall": 0.5498,
+        "f1": 0.5979,
+        "roc_auc": 0.7317,
+        "brier_score": 0.2064,
+        "confusion_matrix": [
+            [
+                527,
+                151
+            ],
+            [
+                235,
+                287
+            ]
+        ]
+    },
+    "train_rows": 4800,
+    "test_rows": 1200,
+    "random_state": 42,
+    "scikit_learn_version": "1.9.1"
 }
