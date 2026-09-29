@@ -22,8 +22,8 @@ MODEL_PATH = MODEL_DIR / "tuned_random_forest.joblib"
 # ============================================================
 
 # Final threshold identified during model analysis.
-# Best F1 was achieved at approximately 0.40.
-DEPLOYMENT_THRESHOLD = 0.40
+# Best F1 was achieved at approximately 0.42.
+DEPLOYMENT_THRESHOLD = 0.42
 
 
 # ============================================================
