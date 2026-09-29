@@ -95,6 +95,7 @@ Joblib Serialization
 Prediction Engine
        ↓
 FastAPI
+```
 
 ---
 
@@ -107,6 +108,16 @@ The project evaluates the required classification models:
 3. Random Forest
 
 Random Forest was subsequently tuned and used as the final model.
+
+## Final Model Selection
+
+The tuned Random Forest was selected as the final model after comparing Logistic Regression, Decision Tree and Random Forest using the required evaluation metrics.
+
+The selection considered predictive performance on the held-out test set, the balance between precision and recall reflected by F1-score, ROC-AUC, generalisation to unseen data, the ability to capture nonlinear relationships, feature-importance analysis, and the usefulness of conversion probabilities for lead prioritisation.
+
+Accuracy was not treated as the sole selection criterion because it can be misleading when the target classes are imbalanced.
+
+The final model and preprocessing artifacts are saved using Joblib and can be loaded by the prediction engine without retraining.
 
 ---
 
@@ -123,6 +134,7 @@ The preprocessing pipeline uses separate transformations for numerical and categ
 
 - Most-frequent imputation
 - One-hot encoding
+
 ---
 
 ## Threshold Analysis
@@ -157,6 +169,8 @@ From the project root:
 ```bash
 python src/generate_data.py
 python src/validate_data.py
+```
+
 ---
 
 ## How to Evaluate
@@ -209,6 +223,7 @@ It:
 7. Assigns a conversion-potential category.
 
 The prediction engine loads the saved artifacts and does not retrain the model during prediction.
+
 ---
 
 ## FastAPI API
@@ -243,6 +258,8 @@ From the project root:
 
 ```bash
 uvicorn src.api:app --reload
+```
+
 ---
 
 ## Model Artifacts
@@ -305,6 +322,7 @@ lead-conversion-prediction/
 ├── .gitignore
 ├── README.md
 └── requirements.txt
+```
 
 ---
 
