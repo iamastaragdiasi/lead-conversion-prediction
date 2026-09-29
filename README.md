@@ -18,7 +18,7 @@ The system provides:
 - Deployment threshold
 - Conversion potential category
 
-The final system uses a **Tuned Random Forest** model with a deployment threshold of **0.40**.
+The final system uses a **Tuned Random Forest** model with a deployment threshold of **0.42**.
 
 ---
 
@@ -29,8 +29,8 @@ The final system uses a **Tuned Random Forest** model with a deployment threshol
 | Model | Tuned Random Forest |
 | Raw input features | 14 |
 | Processed features | 33 |
-| Deployment threshold | 0.40 |
-| Analysis best F1 | 0.6513 |
+| Deployment threshold | 0.42 |
+| Analysis best F1 | 0.6572 |
 | Test Accuracy | 0.6483 |
 | Test Precision | 0.5868 |
 | Test Recall | 0.6475 |
@@ -143,10 +143,10 @@ The model produces a probability of conversion.
 
 Threshold analysis identified:
 
-- Best analysis threshold: `0.40`
-- Analysis best F1-score: approximately `0.6513`
+- Best analysis threshold: `0.42`
+- Analysis best F1-score: approximately `0.6572`
 
-The deployment threshold is therefore `0.40`.
+The deployment threshold is therefore `0.42`.
 
 ---
 
@@ -202,7 +202,7 @@ The evaluation covers:
 | F1-score | 0.6157 |
 | ROC-AUC | 0.7220 |
 
-The deployment threshold is `0.40`, with an analysis best F1-score of approximately `0.6513`.
+The deployment threshold is `0.42`, with an analysis best F1-score of approximately `0.6572`.
 
 ---
 
@@ -361,7 +361,7 @@ The final Tuned Random Forest achieved the following results on the held-out tes
 | F1-score | 0.6157 |
 | ROC-AUC | 0.7220 |
 
-The deployment threshold is `0.40`, with an analysis best F1-score of approximately `0.6513`.
+The deployment threshold is `0.42`, with an analysis best F1-score of approximately `0.6572`.
 
 ---
 
@@ -427,7 +427,7 @@ The predicted probability is a model output and should not automatically be inte
 
 ### Threshold
 
-The `0.40` threshold was selected through analysis on the project data. Production deployment would require validation using representative real-world data and an appropriate business objective.
+The `0.42` threshold was selected through analysis on the project data. Production deployment would require validation using representative real-world data and an appropriate business objective.
 
 ---
 

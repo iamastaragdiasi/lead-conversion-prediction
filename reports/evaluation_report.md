@@ -200,8 +200,8 @@ Threshold analysis was performed to determine an operational classification thre
 
 The analysis identified:
 
-- Best analysis threshold: **0.40**
-- Best analysis F1-score: **approximately 0.6513**
+- Best analysis threshold: **0.42**
+- Best analysis F1-score: **approximately 0.6572**
 
 The deployment threshold was therefore set to:
 
@@ -283,7 +283,7 @@ The prediction engine:
 3. Separates categorical and numerical inputs.
 4. Applies the saved preprocessing pipeline.
 5. Generates a conversion probability.
-6. Applies the deployment threshold of 0.40.
+6. Applies the deployment threshold of 0.42.
 7. Produces the predicted class.
 8. Assigns an operational conversion-potential category.
 
@@ -365,7 +365,7 @@ An example verified response included approximately:
 - Conversion percentage: **53.76%**
 - Predicted class: **1**
 - Prediction: **Converted**
-- Threshold: **0.40**
+- Threshold: **0.42**
 - Risk level: **Medium Conversion Potential**
 
 ### Health Check
@@ -435,7 +435,7 @@ The predicted probability is a model output and should not automatically be inte
 
 ### Threshold
 
-The 0.40 threshold was selected through analysis on the project data. A production system would require validation using representative business data and an appropriate business objective.
+The 0.42 threshold was selected through analysis on the project data. A production system would require validation using representative business data and an appropriate business objective.
 
 ### Feature Availability
 
@@ -472,7 +472,7 @@ The final selected model is the **Tuned Random Forest**.
 
 The final model uses **14 raw input features**, which are transformed into **33 processed features**.
 
-The deployment threshold is **0.40**.
+The deployment threshold is **0.42**.
 
 Final held-out test performance:
 
