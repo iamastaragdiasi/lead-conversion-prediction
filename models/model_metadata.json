@@ -1,0 +1,13 @@
+{
+    "model_type": "Tuned Random Forest",
+    "model_file": "tuned_random_forest.joblib",
+    "preprocessor_file": "preprocessor.joblib",
+    "processed_feature_count": 33,
+    "analysis_threshold": 0.39999999999999997,
+    "analysis_best_f1": 0.6512968299711815,
+    "test_accuracy": 0.6483333333333333,
+    "test_precision": 0.5868055555555556,
+    "test_recall": 0.6475095785440613,
+    "test_f1": 0.6156648451730419,
+    "test_roc_auc": 0.7219933543552708
+}
