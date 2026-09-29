@@ -169,11 +169,29 @@ Decision Tree provides a non-linear tree-based approach.
 Random Forest provides an ensemble-based non-linear model.
 
 Random Forest was subsequently tuned to improve the final model configuration.
+### Model Comparison
 
-The final selected model is the **Tuned Random Forest**.
+The evaluated models produced the following held-out test results:
 
----
+| Model | Accuracy | Precision | Recall | F1-score | ROC-AUC |
+|---|---:|---:|---:|---:|---:|
+| Logistic Regression | 0.6783 | 0.6553 | 0.5498 | 0.5979 | 0.7317 |
+| Decision Tree | 0.6492 | 0.6292 | 0.4713 | 0.5389 | 0.6630 |
+| Random Forest | 0.6525 | 0.5897 | 0.6609 | 0.6233 | 0.7239 |
+| Tuned Random Forest | 0.6483 | 0.5868 | 0.6475 | 0.6157 | 0.7220 |
 
+Accuracy is considered together with precision, recall, F1-score and ROC-AUC because different error types have different implications for lead-conversion prediction.
+
+### Confusion Matrices
+
+The held-out test confusion matrices were:
+
+**Logistic Regression**
+
+```text
+[[527, 151],
+ [235, 287]]
+ 
 ## 8. Final Model
 
 The final model is:
@@ -205,7 +223,7 @@ The analysis identified:
 
 The deployment threshold was therefore set to:
 
-**0.40**
+**0.42**
 
 This threshold is used by the prediction engine when converting the model probability into the final predicted class.
 
@@ -236,8 +254,23 @@ The F1-score of approximately **0.6157** reflects the balance between precision 
 Accuracy is not treated as the sole evaluation criterion because lead conversion is a classification problem where precision, recall, F1-score and ROC-AUC provide additional information about model behaviour.
 
 ---
+## 11. Feature Importance
 
-## 11. Model Artifacts
+Feature importance analysis was performed for the final Tuned Random Forest.
+
+Among the most influential processed features were:
+
+| Feature | Importance |
+|---|---:|
+| response_time_hours | 0.1334 |
+| quotation_value | 0.1195 |
+| lead_age_days | 0.0876 |
+
+Feature importance represents predictive contribution within the fitted model and should not be interpreted as causal impact.
+
+---
+
+## 12. Model Artifacts
 
 The final trained artifacts are stored under the `models/` directory.
 
@@ -270,7 +303,7 @@ This provides a lightweight record of the final model configuration and evaluati
 
 ---
 
-## 12. Prediction Engine
+## 13. Prediction Engine
 
 The reusable prediction engine is implemented in:
 
@@ -291,7 +324,7 @@ The prediction engine loads the saved artifacts directly and does not retrain th
 
 ---
 
-## 13. Conversion Potential Categories
+## 14. Conversion Potential Categories
 
 The model probability is converted into three operational categories.
 
@@ -305,7 +338,7 @@ These categories are operational interpretations of the model probability and ar
 
 ---
 
-## 14. FastAPI Prediction API
+## 15. FastAPI Prediction API
 
 A FastAPI layer was added to expose the prediction engine through HTTP.
 
@@ -342,7 +375,7 @@ Validation includes constraints such as:
 
 ---
 
-## 15. API Validation
+## 16. API Validation
 
 The FastAPI implementation was validated using the Swagger interface.
 
@@ -384,7 +417,7 @@ FastAPI correctly returned HTTP `422` validation responses for invalid requests.
 
 ---
 
-## 16. Reproducibility
+## 17. Reproducibility
 
 The project is designed so that the trained artifacts can be reused without retraining.
 
@@ -409,7 +442,7 @@ This allows prediction to be performed using the saved model rather than requiri
 
 ---
 
-## 17. Limitations
+## 18. Limitations
 
 The project has several important limitations.
 
@@ -443,7 +476,7 @@ The system assumes that the required input information is available at predictio
 
 ---
 
-## 18. Conclusion
+## 19. Conclusion
 
 The Lead Conversion Prediction Engine implements the complete required Machine Learning workflow from synthetic data generation through prediction.
 
