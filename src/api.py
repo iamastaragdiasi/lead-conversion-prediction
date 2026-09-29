@@ -1,4 +1,4 @@
-# STEP 38 — Lead Conversion Prediction API
+# Lead Conversion Prediction API (optional REST interface)
 
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
@@ -91,6 +91,9 @@ def predict(request: LeadRequest):
             "success": True,
             "prediction": prediction,
         }
+
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc))
 
     except Exception as exc:
         raise HTTPException(

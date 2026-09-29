@@ -65,10 +65,31 @@ def conversion_category(probability: float) -> str:
     return "Low Potential"
 
 
+def _known_categories() -> dict[str, set[str]]:
+    encoder = (
+        pipeline.named_steps["preprocessor"]
+        .named_transformers_["categorical"]
+        .named_steps["encoder"]
+    )
+    return {
+        feature: {str(v) for v in values}
+        for feature, values in zip(CATEGORICAL_FEATURES, encoder.categories_)
+    }
+
+
+KNOWN_CATEGORIES = _known_categories()
+
+
 def _validate(lead_data: dict[str, Any]) -> None:
     missing = [f for f in FEATURES if f not in lead_data]
     if missing:
         raise ValueError(f"Missing required features: {missing}")
+
+    for feature in CATEGORICAL_FEATURES:
+        value = lead_data[feature]
+        if value is not None and str(value) not in KNOWN_CATEGORIES[feature]:
+            allowed = sorted(KNOWN_CATEGORIES[feature])
+            raise ValueError(f"'{feature}' must be one of {allowed}, got {value!r}")
 
     for feature in NUMERICAL_FEATURES:
         value = lead_data[feature]
@@ -112,8 +133,6 @@ def predict_lead(lead_data: dict[str, Any]) -> dict[str, Any]:
         "prediction": "Likely to Convert" if predicted_class else "Unlikely to Convert",
         "threshold": DEPLOYMENT_THRESHOLD,
         "category": category,
-        # Kept for backward compatibility with earlier API clients.
-        "risk_level": category,
     }
 
 
@@ -122,6 +141,13 @@ def predict_leads(leads: pd.DataFrame) -> pd.DataFrame:
     missing = [f for f in FEATURES if f not in leads.columns]
     if missing:
         raise ValueError(f"Missing required columns: {missing}")
+
+    for row_number, row in enumerate(leads[FEATURES].to_dict(orient="records"), start=1):
+        clean_row = {k: (None if pd.isna(v) else v) for k, v in row.items()}
+        try:
+            _validate(clean_row)
+        except ValueError as exc:
+            raise ValueError(f"Row {row_number}: {exc}") from None
 
     probabilities = pipeline.predict_proba(leads[FEATURES])[:, 1]
     scored = leads.copy()

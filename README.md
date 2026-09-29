@@ -39,8 +39,8 @@ Generate data → Validate & clean → EDA → Leakage review → Stratified 80/
 
 ## Requirements
 
-- Python 3.11+ (developed and tested with Python 3.13)
-- Libraries (pinned in `requirements.txt`): pandas, NumPy, scikit-learn, Joblib, SciPy, Matplotlib, Seaborn, Jupyter
+- Python 3.12+ (developed and tested with Python 3.13; NumPy 2.5 and SciPy 1.18 require 3.12 or newer)
+- Libraries (all versions pinned in `requirements.txt`): pandas, NumPy, scikit-learn, Joblib, SciPy, Matplotlib, Seaborn, Jupyter
 - Optional, for the web API: FastAPI, Uvicorn, Pydantic (also in `requirements.txt`)
 
 ---
@@ -86,6 +86,8 @@ The dataset is **synthetic** and generated locally by `src/generate_data.py` (se
 | Categorical features | Numerical features |
 |---|---|
 | `lead_source`, `industry`, `location`, `company_size` | `lead_age_days`, `interactions`, `followups`, `response_time_hours`, `quotation_sent`, `quotation_value`, `website_visits`, `previous_customer`, `demo_attended`, `salesperson_experience` |
+
+`company_size` is stored as a band (Small / Medium / Large / Enterprise) rather than an exact head-count, because CRMs usually capture company size as a range and the band is easier for sales staff to enter reliably.
 
 `lead_id` is an identifier and is excluded from modelling.
 
