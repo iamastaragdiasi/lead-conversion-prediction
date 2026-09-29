@@ -169,6 +169,7 @@ Decision Tree provides a non-linear tree-based approach.
 Random Forest provides an ensemble-based non-linear model.
 
 Random Forest was subsequently tuned to improve the final model configuration.
+
 ### Model Comparison
 
 The evaluated models produced the following held-out test results:
@@ -191,7 +192,35 @@ The held-out test confusion matrices were:
 ```text
 [[527, 151],
  [235, 287]]
- 
+```
+
+**Decision Tree**
+
+```text
+[[533, 145],
+ [276, 246]]
+```
+
+**Random Forest**
+
+```text
+[[438, 240],
+ [177, 345]]
+```
+
+**Tuned Random Forest**
+
+```text
+[[440, 238],
+ [184, 338]]
+```
+
+Each matrix is shown as `[[TN, FP], [FN, TP]]`.
+
+The final selected model is the **Tuned Random Forest**.
+
+---
+
 ## 8. Final Model
 
 The final model is:
