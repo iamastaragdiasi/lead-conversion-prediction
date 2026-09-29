@@ -144,7 +144,10 @@ def main() -> None:
 
     if args.csv:
         leads = pd.read_csv(args.csv)
-        scored = predict_leads(leads)
+        try:
+            scored = predict_leads(leads)
+        except ValueError as exc:
+            sys.exit(f"Invalid CSV: {exc}")
         output = args.csv.with_name(f"{args.csv.stem}_scored.csv")
         scored.to_csv(output, index=False)
         print(f"Scored {len(scored)} leads -> {output}")

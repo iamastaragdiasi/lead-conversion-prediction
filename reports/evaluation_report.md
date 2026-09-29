@@ -35,6 +35,8 @@ The model uses 14 input features:
 | Categorical (4) | `lead_source`, `industry`, `location`, `company_size` |
 | Numerical (10) | `lead_age_days`, `interactions`, `followups`, `response_time_hours`, `quotation_sent`, `quotation_value`, `website_visits`, `previous_customer`, `demo_attended`, `salesperson_experience` |
 
+`company_size` is modelled as a band (Small / Medium / Large / Enterprise) rather than an exact head-count, because CRMs usually record company size as a range and a band is easier to enter consistently.
+
 `lead_id` is an identifier and is excluded from modelling.
 
 ### Target
@@ -408,7 +410,7 @@ python src/train.py            # trains, compares, saves pipeline + metrics + fi
 python src/predict.py --example
 ```
 
-Fixed seeds (`random_state=42`) are used for data generation, the split, cross-validation and all models. Dependencies are pinned in `requirements.txt`. Re-running the scripts reproduces the numbers in this report exactly.
+Fixed seeds (`random_state=42`) are used for data generation, the split, cross-validation and all models. All dependency versions are pinned in `requirements.txt` (Python 3.12+). Re-running the scripts reproduces the numbers in this report exactly.
 
 ---
 
