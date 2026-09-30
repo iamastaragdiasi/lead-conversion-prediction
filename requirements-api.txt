@@ -1,0 +1,7 @@
+# Optional: only needed for the FastAPI service (src/api.py).
+# Install with:  pip install -r requirements-api.txt
+-r requirements.txt
+
+fastapi>=0.110
+uvicorn>=0.29
+pydantic>=2.0

@@ -26,6 +26,18 @@ A synthetic dataset of **6,020 raw records** (6,000 after cleaning) is generated
 
 The generator is not random noise: conversion is drawn from a logistic function of business drivers — lead source, industry, company size, interactions, follow-ups, response time, quotation sent and value, website visits, previous-customer status, demo attendance and salesperson experience — plus random noise. `location` and `lead_age_days` are deliberately given **no** effect, which later serves as a check on the feature-importance analysis.
 
+The sales-funnel features are generated as a **chain**, not independently, because in a real sales process they depend on each other:
+
+| Relationship | How it is generated |
+|---|---|
+| Company size, lead source → website visits, interactions | Website leads and returning customers visit more; larger companies have more interactions |
+| Interactions → follow-ups, demo attendance | More interactions raise the expected follow-ups and the chance of a demo |
+| Demo attended → quotation sent | A quotation is sent to 71% of leads who attended a demo vs 29% who did not |
+| Company size → quotation value | Median quotation ≈ ₹45k (Small), ₹70k (Medium), ₹114k (Large), ₹206k (Enterprise) |
+| Salesperson experience → response time | Experienced salespeople respond faster (correlation −0.22) |
+
+Because the features are correlated, part of the effect of one feature can be picked up by another (see section 12).
+
 ### Features
 
 The model uses 14 input features:
@@ -56,7 +68,7 @@ The generator intentionally injects realistic data-quality problems so that vali
 | Negative `response_time_hours` (−5) | 10 | Set to missing, imputed later |
 | Missing `lead_source`, `industry`, `company_size`, `quotation_value` | 60 each (1.0%) | Imputed inside the model pipeline |
 | Missing `response_time_hours` | 62 (1.03%) + 10 invalid | Imputed inside the model pipeline |
-| Quotation value missing although quotation sent | 28 | Imputed (see limitations) |
+| Quotation value missing although quotation sent | 21 | Imputed (see limitations) |
 
 Missing values are **not** imputed in the cleaned file; imputation happens inside the pipeline after the train/test split so that imputation statistics come from training data only.
 
@@ -70,15 +82,24 @@ EDA in the notebook covers dataset structure, data types, unique values, missing
 
 Key findings:
 
-- **Target balance:** 56.5% not converted, 43.5% converted — mildly imbalanced, so accuracy must be read together with other metrics (section 7).
+- **Target balance:** 56.2% not converted, 43.8% converted — mildly imbalanced, so accuracy must be read together with other metrics (section 7).
 - **Lead source** and **company size** show clear differences in conversion rate (e.g. Referral and Partner leads convert more often than Cold Call and Social Media leads).
 - `quotation_sent`, `quotation_value`, `previous_customer` and `demo_attended` have the strongest positive relationships with conversion; `response_time_hours` has a negative one.
 - `quotation_sent` and `quotation_value` are strongly correlated (Spearman ≈ 0.95).
+- Funnel features are related to each other: interactions correlate with follow-ups (Spearman ≈ 0.36) and demo attendance, and leads who attended a demo convert at 62.8% vs 34.8%.
 - `response_time_hours` and `quotation_value` are right-skewed with large but plausible values; they were kept (not clipped), because extreme values are legitimate business observations, not errors.
 
 ---
 
 ## 5. Data Leakage Analysis
+
+### Prediction point
+
+The model scores a lead **mid-funnel**, once the first sales activity has happened: the lead has been contacted, and demo and quotation status are known up to that date. It is **not** designed to score a brand-new lead at the moment it is created, because at that point `interactions`, `followups`, `demo_attended`, `quotation_sent` and `quotation_value` do not exist yet (they would all be 0). A lead should be re-scored as new activity is recorded.
+
+This choice defines what "leakage" means for this project: every feature must be the value **as of the scoring date**, never a value recorded after the outcome was known. A model for brand-new leads would need to be trained only on the features known at creation (`lead_source`, `industry`, `location`, `company_size`, `previous_customer`).
+
+### Feature review
 
 A feature leaks if its value is only known **after** the conversion outcome. Each feature was reviewed for when it becomes available:
 
@@ -112,7 +133,7 @@ Process safeguards:
 
 A `ColumnTransformer` combines both, producing **33 processed features from 14 raw features**. The preprocessing and the classifier are saved together as one pipeline (`models/lead_conversion_pipeline.joblib`), so new leads are always transformed exactly as during training.
 
-Split: 80% training (4,800 rows) / 20% test (1,200 rows), **stratified** on `converted` (43.5% in both), `random_state=42`.
+Split: 80% training (4,800 rows) / 20% test (1,200 rows), **stratified** on `converted` (43.8% in both), `random_state=42`.
 
 ---
 
@@ -130,7 +151,7 @@ Split: 80% training (4,800 rows) / 20% test (1,200 rows), **stratified** on `con
 
 ### Why accuracy is not enough
 
-If 95% of leads never convert, a model that predicts "no lead will convert" achieves **95% accuracy** while finding **zero** customers (recall = 0). It is useless for a sales team. In this dataset, predicting "not converted" for everyone would already score **56.5%** accuracy. Accuracy also hides the *type* of error, and for lead scoring a missed buyer and a wasted call have different costs. Precision, recall, F1 and ROC-AUC show those trade-offs, so models are compared on all of them, and the final choice uses cross-validated ROC-AUC.
+If 95% of leads never convert, a model that predicts "no lead will convert" achieves **95% accuracy** while finding **zero** customers (recall = 0). It is useless for a sales team. In this dataset, predicting "not converted" for everyone would already score **56.2%** accuracy. Accuracy also hides the *type* of error, and for lead scoring a missed buyer and a wasted call have different costs. Precision, recall, F1 and ROC-AUC show those trade-offs, so models are compared on all of them, and the final choice uses cross-validated ROC-AUC.
 
 ---
 
@@ -143,7 +164,7 @@ If 95% of leads never convert, a model that predicts "no lead will convert" achi
 | Random Forest | 300 trees, `max_depth=10`, `min_samples_split=20`, `min_samples_leaf=10`, `class_weight="balanced"` | Non-linear ensemble |
 | Tuned Random Forest | `GridSearchCV`, 24 combinations × 5 folds, scoring ROC-AUC, on training data | Test whether tuning helps |
 
-Tuned Random Forest best parameters: `n_estimators=300`, `max_depth=10`, `min_samples_split=10`, `min_samples_leaf=10`. With `min_samples_leaf=10`, a split threshold of 10 or 20 behaves identically, so the tuned forest is the same model as the baseline Random Forest — **tuning produced no improvement**.
+Tuned Random Forest best parameters: `n_estimators=300`, `max_depth=14`, `min_samples_split=10`, `min_samples_leaf=10`. Its cross-validated ROC-AUC (0.7268) is essentially the same as the baseline Random Forest (0.7267), while its training ROC-AUC rises from 0.83 to 0.86 — **tuning produced no meaningful improvement and increased overfitting**.
 
 ### Model Comparison
 
@@ -151,18 +172,21 @@ Cross-validation (CV) = 5-fold stratified on the training set. Test metrics at t
 
 | Model | Train ROC-AUC | CV ROC-AUC | Test Accuracy | Test Precision | Test Recall | Test F1 | Test ROC-AUC | Test Brier |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|
-| **Logistic Regression** | 0.7083 | **0.6985** | **0.6783** | **0.6553** | 0.5498 | 0.5979 | **0.7317** | **0.2064** |
-| Decision Tree | 0.7070 | 0.6263 | 0.6492 | 0.6292 | 0.4713 | 0.5389 | 0.6630 | 0.2269 |
-| Random Forest | 0.8206 | 0.6794 | 0.6525 | 0.5897 | 0.6609 | 0.6233 | 0.7239 | 0.2168 |
-| Tuned Random Forest | 0.8206 | 0.6794 | 0.6525 | 0.5897 | 0.6609 | 0.6233 | 0.7239 | 0.2168 |
+| **Logistic Regression** | 0.7494 | **0.7415** | **0.6925** | **0.6765** | 0.5695 | 0.6184 | **0.7492** | **0.1998** |
+| Decision Tree | 0.7519 | 0.6715 | 0.6608 | 0.6261 | 0.5581 | 0.5901 | 0.6977 | 0.2183 |
+| Random Forest | 0.8320 | 0.7267 | 0.6783 | 0.6257 | **0.6590** | **0.6419** | 0.7434 | 0.2072 |
+| Tuned Random Forest | 0.8563 | 0.7268 | 0.6717 | 0.6193 | 0.6476 | 0.6331 | 0.7430 | 0.2067 |
 
-At 0.50 the Random Forest shows higher recall and F1 only because it uses `class_weight="balanced"`, which shifts its probabilities upwards; that is a threshold effect, not better ranking. When each model is given its own best threshold chosen on training data, Logistic Regression has the highest test F1:
+At 0.50 the Random Forest shows higher recall and F1 mainly because it uses `class_weight="balanced"`, which shifts its probabilities upwards; that is a threshold effect, not better ranking. When each model is given its own best threshold chosen on training data:
 
 | Model | Own CV threshold | Test Precision | Test Recall | Test F1 |
 |---|---:|---:|---:|---:|
-| **Logistic Regression** | 0.32 | 0.5291 | 0.8697 | **0.6580** |
-| Decision Tree | 0.20 | 0.4506 | 0.9444 | 0.6101 |
-| Random Forest | 0.37 | 0.4922 | 0.9100 | 0.6389 |
+| **Logistic Regression** | 0.32 | 0.5543 | 0.8267 | 0.6636 |
+| Decision Tree | 0.17 | 0.4771 | 0.9314 | 0.6310 |
+| Random Forest | 0.41 | 0.5619 | 0.8210 | 0.6672 |
+| Tuned Random Forest | 0.42 | 0.5716 | 0.8057 | **0.6688** |
+
+The two Random Forests reach a slightly higher test F1 than Logistic Regression (+0.004 to +0.005). This difference is small — on 1,200 test leads it amounts to a handful of predictions — and it is measured on the test set, which is not used for model selection. It is reported here rather than hidden.
 
 Figures: `model_performance_comparison.png`, `roc_curve_comparison.png`, `precision_recall_curves.png`.
 
@@ -173,38 +197,38 @@ Test set, default threshold 0.50, format `[[TN, FP], [FN, TP]]`:
 **Logistic Regression**
 
 ```text
-[[527, 151],
- [235, 287]]
+[[532, 143],
+ [226, 299]]
 ```
 
 **Decision Tree**
 
 ```text
-[[533, 145],
- [276, 246]]
+[[500, 175],
+ [232, 293]]
 ```
 
 **Random Forest**
 
 ```text
-[[438, 240],
- [177, 345]]
+[[468, 207],
+ [179, 346]]
 ```
 
 **Tuned Random Forest**
 
 ```text
-[[438, 240],
- [177, 345]]
+[[466, 209],
+ [185, 340]]
 ```
 
 Figure: `confusion_matrices.png`.
 
 ### Overfitting and underfitting
 
-- Random Forest: train ROC-AUC 0.82 vs CV 0.68 — a large gap, i.e. **overfitting** (it memorises noise in the training data).
-- Decision Tree: train 0.71 vs CV 0.63 — overfits and also ranks leads poorly.
-- Logistic Regression: train 0.71 vs CV 0.70 — almost no gap, so it generalises well. Its absolute score is limited by the noise built into the data, not by underfitting.
+- Random Forest: train ROC-AUC 0.83 vs CV 0.73 — a large gap, i.e. **overfitting** (it memorises noise in the training data). The tuned forest is worse: train 0.86 vs CV 0.73.
+- Decision Tree: train 0.75 vs CV 0.67 — overfits and also ranks leads poorly.
+- Logistic Regression: train 0.75 vs CV 0.74 — almost no gap, so it generalises well. Its absolute score is limited by the noise built into the data, not by underfitting: scoring the test set with the generator's own (noise-free) formula gives a ROC-AUC of about 0.754, and the model reaches 0.749.
 
 ---
 
@@ -216,15 +240,15 @@ Selection rule: highest cross-validated ROC-AUC on the training set (not test ac
 
 | Criterion | Assessment |
 |---|---|
-| Predictive performance | Highest CV ROC-AUC (0.6985) and test ROC-AUC (0.7317); highest test F1 when every model uses its own training-selected threshold. |
+| Predictive performance | Highest CV ROC-AUC (0.7415) and test ROC-AUC (0.7492). At each model's own threshold its test F1 (0.664) is within 0.005 of the Random Forests. |
 | Generalisation | Smallest train–CV gap of all models. |
-| Probability quality | Best Brier score (0.2064): the displayed conversion percentage is the most trustworthy. |
+| Probability quality | Best Brier score (0.1998): the displayed conversion percentage is the most trustworthy. |
 | Interpretability | Each coefficient shows the direction and size of a driver; easy to explain to a sales team and in the viva. |
 | Computational cost | Trains in well under a second and scores 100,000+ leads in seconds; the model file is a few kilobytes. |
 | False negatives vs false positives | A missed buyer (FN) loses a deal; a wasted call (FP) costs a little sales time. The threshold is therefore tuned to favour recall (section 10). |
 | Business usefulness | Produces a ranked probability list that can be sorted to decide which leads to call first. |
 
-Why not Random Forest: it overfits, tuning did not help, and it does not rank leads better than the simpler model. The data here is generated by an essentially linear (logistic) process, which explains this result. On real CRM data with non-linear interactions a tree ensemble could win; `src/train.py` makes that comparison easy to repeat.
+Why not Random Forest: it overfits, tuning did not help, it ranks leads slightly worse (lower CV and test ROC-AUC), and its small F1 advantage on the test set is not large enough to give up the interpretability and calibration of the simpler model. The data here is generated by an essentially linear (logistic) process, which explains this result. On real CRM data with non-linear interactions a tree ensemble could win; `src/train.py` makes that comparison easy to repeat.
 
 Earlier versions of this project selected a tuned Random Forest based on test-set numbers. That choice was revisited after the cross-validated comparison and the threshold-leakage correction, and is documented here rather than hidden.
 
@@ -238,16 +262,16 @@ Method: 5-fold out-of-fold probabilities for the **training set** (each training
 
 | Threshold | Precision (OOF) | Recall (OOF) | F1 (OOF) |
 |---:|---:|---:|---:|
-| 0.25 | 0.4841 | 0.9267 | 0.6360 |
-| 0.30 | 0.5086 | 0.8625 | 0.6399 |
-| **0.32** | **0.5203** | **0.8362** | **0.6414** |
-| 0.35 | 0.5368 | 0.7869 | 0.6382 |
-| 0.40 | 0.5629 | 0.6983 | 0.6233 |
-| 0.50 | 0.6198 | 0.4966 | 0.5514 |
+| 0.25 | 0.5135 | 0.9115 | 0.6570 |
+| 0.30 | 0.5450 | 0.8525 | 0.6649 |
+| **0.32** | **0.5579** | **0.8278** | **0.6665** |
+| 0.35 | 0.5774 | 0.7864 | 0.6659 |
+| 0.40 | 0.6077 | 0.7127 | 0.6560 |
+| 0.50 | 0.6639 | 0.5618 | 0.6086 |
 
 **Selected decision threshold: 0.32**, stored in `models/model_metadata.json` and read by the prediction engine.
 
-The F1 curve is flat between roughly 0.25 and 0.37, so the exact value is not critical. The chosen threshold favours recall: most real buyers are flagged at the cost of more calls to non-buyers. A business with limited sales capacity could raise the threshold (for example 0.45–0.50) to gain precision. The trade-off is shown in `threshold_analysis.png`.
+The F1 curve is flat between roughly 0.29 and 0.38, so the exact value is not critical. The chosen threshold favours recall: most real buyers are flagged at the cost of more calls to non-buyers. A business with limited sales capacity could raise the threshold (for example 0.45–0.50) to gain precision. The trade-off is shown in `threshold_analysis.png`.
 
 ---
 
@@ -257,31 +281,31 @@ Logistic Regression on the untouched test set (1,200 leads) at the decision thre
 
 | Metric | Result |
 |---|---:|
-| Accuracy | 0.6067 |
-| Precision | 0.5291 |
-| Recall | 0.8697 |
-| F1-score | 0.6580 |
-| ROC-AUC | 0.7317 |
-| Brier score | 0.2064 |
+| Accuracy | 0.6333 |
+| Precision | 0.5543 |
+| Recall | 0.8267 |
+| F1-score | 0.6636 |
+| ROC-AUC | 0.7492 |
+| Brier score | 0.1998 |
 
 Confusion matrix `[[TN, FP], [FN, TP]]`:
 
 ```text
-[[274, 404],
- [ 68, 454]]
+[[326, 349],
+ [ 91, 434]]
 ```
 
-Interpretation: the model finds **454 of 522** real buyers (87%) and misses 68. The price is 404 calls to leads that do not convert. Accuracy is lower than at 0.50 (0.6783) because the threshold deliberately trades accuracy for recall. This is the intended business behaviour, and it shows why accuracy alone would be the wrong selection criterion.
+Interpretation: the model finds **434 of 525** real buyers (83%) and misses 91. The price is 349 calls to leads that do not convert. Accuracy is lower than at 0.50 (0.6925) because the threshold deliberately trades accuracy for recall. This is the intended business behaviour, and it shows why accuracy alone would be the wrong selection criterion.
 
-For reference, at 0.50 the same model gives accuracy 0.6783, precision 0.6553, recall 0.5498, F1 0.5979.
+For reference, at 0.50 the same model gives accuracy 0.6925, precision 0.6765, recall 0.5695, F1 0.6184.
 
 ### Category check on the test set
 
 | Category | Leads | Actual conversion rate |
 |---|---:|---:|
-| High Potential (≥ 0.70) | 93 | 83.9% |
-| Medium Potential (0.32 – < 0.70) | 765 | 49.2% |
-| Low Potential (< 0.32) | 342 | 19.9% |
+| High Potential (≥ 0.70) | 177 | 83.1% |
+| Medium Potential (0.32 – < 0.70) | 606 | 47.4% |
+| Low Potential (< 0.32) | 417 | 21.8% |
 
 Higher categories convert far more often, so the categories are useful for prioritisation.
 
@@ -298,43 +322,44 @@ Two methods were used on the final model:
 
 | Feature | Importance | Std |
 |---|---:|---:|
-| lead_source | 0.0576 | 0.0076 |
-| quotation_sent | 0.0455 | 0.0065 |
-| previous_customer | 0.0308 | 0.0070 |
-| demo_attended | 0.0273 | 0.0053 |
-| response_time_hours | 0.0166 | 0.0043 |
-| quotation_value | 0.0131 | 0.0025 |
-| company_size | 0.0123 | 0.0039 |
-| interactions | 0.0059 | 0.0035 |
-| followups | 0.0044 | 0.0015 |
-| industry | 0.0035 | 0.0035 |
-| salesperson_experience | 0.0020 | 0.0013 |
-| lead_age_days | 0.0005 | 0.0010 |
-| website_visits | 0.0000 | 0.0001 |
-| location | −0.0007 | 0.0014 |
+| demo_attended | 0.0411 | 0.0074 |
+| quotation_sent | 0.0291 | 0.0049 |
+| response_time_hours | 0.0252 | 0.0057 |
+| lead_source | 0.0207 | 0.0055 |
+| previous_customer | 0.0196 | 0.0043 |
+| company_size | 0.0090 | 0.0042 |
+| followups | 0.0083 | 0.0028 |
+| quotation_value | 0.0073 | 0.0014 |
+| industry | 0.0045 | 0.0025 |
+| salesperson_experience | 0.0010 | 0.0009 |
+| location | 0.0009 | 0.0018 |
+| website_visits | 0.0003 | 0.0012 |
+| interactions | 0.0002 | 0.0018 |
+| lead_age_days | −0.0004 | 0.0003 |
 
 ### Largest Logistic Regression coefficients (log-odds)
 
 | Feature | Coefficient | Effect |
 |---|---:|---|
-| lead_source = Cold Call | −0.5625 | lowers conversion |
-| lead_source = Referral | +0.5201 | raises conversion |
-| lead_source = Social Media | −0.4324 | lowers |
-| company_size = Enterprise | +0.3680 | raises |
-| company_size = Small | −0.3444 | lowers |
-| lead_source = Partner | +0.3227 | raises |
-| quotation_sent | +0.3149 | raises |
-| response_time_hours | −0.2875 | slower response lowers conversion |
-| previous_customer | +0.2855 | raises |
-| demo_attended | +0.2671 | raises |
+| lead_source = Cold Call | −0.6394 | lowers conversion |
+| lead_source = Referral | +0.4412 | raises conversion |
+| company_size = Small | −0.3545 | lowers |
+| demo_attended | +0.3522 | raises |
+| lead_source = Social Media | −0.3498 | lowers |
+| company_size = Enterprise | +0.3433 | raises |
+| response_time_hours | −0.3295 | slower response lowers conversion |
+| lead_source = Partner | +0.2908 | raises |
+| quotation_sent | +0.2796 | raises |
+| followups | +0.2503 | raises |
 
 Figures: `permutation_importance.png`, `logistic_regression_coefficients.png`, `random_forest_feature_importance.png`.
 
 ### Interpretation and limitations
 
-- Lead source, sending a quotation, being a previous customer, attending a demo and a fast first response are the strongest drivers.
-- `location` and `lead_age_days` have no effect in the data generator and receive about zero permutation importance, which confirms the method is working. `website_visits` has only a very small effect in the generator and is not detectable here.
-- The Random Forest's built-in impurity importance ranks `lead_age_days` 4th. This illustrates a known weakness of that method: it inflates continuous, high-cardinality features. This is why permutation importance was used for interpretation.
+- Attending a demo, sending a quotation, a fast first response, lead source and being a previous customer are the strongest drivers.
+- `location` and `lead_age_days` have no effect in the data generator and receive about zero permutation importance, which confirms the method is working.
+- `interactions` and `website_visits` do affect conversion in the generator, but they receive almost no permutation importance. Their effect runs mostly **through** other features (more interactions → more follow-ups and demos → more quotations), so once the model has those features, shuffling `interactions` alone changes little. This is a direct example of correlated features sharing credit.
+- The Random Forest's built-in impurity importance ranks `lead_age_days` 5th. This illustrates a known weakness of that method: it inflates continuous, high-cardinality features. This is why permutation importance was used for interpretation.
 - `quotation_sent` and `quotation_value` are highly correlated. Correlated features share credit, so each one's individual importance understates the pair.
 - Importance is **predictive, not causal**. It shows what the model relies on, not what would change a customer's decision.
 
@@ -368,7 +393,7 @@ All three are regenerated by `python src/train.py`.
 
 ## 15. Prediction Program and API
 
-`src/predictor.py` loads the saved pipeline and metadata **once** and never retrains. It validates input (required fields, non-negative numbers, 0/1 flags), computes the probability, applies the threshold from the metadata and assigns the category.
+`src/predictor.py` loads the saved pipeline and metadata **once** and never retrains. It validates input before scoring: required fields, known category values, numbers within plausible business ranges (e.g. response time up to 30 days, salesperson experience 1–50 years), whole numbers for counts, yes/no flags exactly 0 or 1, and no quotation value when no quotation was sent. Invalid input is rejected with a clear message rather than scored. It then computes the probability, applies the threshold from the metadata and assigns the category.
 
 **Command-line interface** (`src/predict.py`):
 
@@ -389,7 +414,7 @@ Lead source             : Website
 Industry                : Retail
 ...
 --------------------------------------------
-Conversion Probability  : 66.2%
+Conversion Probability  : 69.4%
 Prediction              : Likely to Convert
 Category                : MEDIUM POTENTIAL
 Decision threshold      : 0.32
@@ -407,22 +432,24 @@ Model                   : Logistic Regression
 python src/generate_data.py    # 6,020 raw records, seed 42
 python src/validate_data.py    # 6,000 cleaned records
 python src/train.py            # trains, compares, saves pipeline + metrics + figures
+python src/evaluate.py         # re-evaluates the saved model on the test set (no retraining)
 python src/predict.py --example
 ```
 
-Fixed seeds (`random_state=42`) are used for data generation, the split, cross-validation and all models. All dependency versions are pinned in `requirements.txt` (Python 3.12+). Re-running the scripts reproduces the numbers in this report exactly.
+Fixed seeds (`random_state=42`) are used for data generation, the split, cross-validation and all models. `requirements.txt` pins scikit-learn to 1.9.1 (the version that trained the saved model) and gives minimum versions for the other libraries (Python 3.11+); the exact versions used for this report are listed in its header. Re-running the scripts with those versions reproduces the numbers in this report exactly (verified on Python 3.11 and 3.13). The API dependencies are optional and live in `requirements-api.txt`.
 
 ---
 
 ## 17. Limitations
 
-- **Synthetic data.** The relationships were designed by the generator, so the results describe those assumptions, not a real market. The metrics are not production performance.
+- **Synthetic data.** The relationships (including the funnel chain between features) were designed by the generator, so the results describe those assumptions, not a real market. The metrics are not production performance.
 - **Modest predictive power.** ROC-AUC of about 0.73 means useful ranking but many individual errors. The noise built into the generator limits how good any model can be.
 - **Near-linear data.** The generator is logistic, which favours Logistic Regression. Real CRM data may contain non-linear effects where tree ensembles perform better.
-- **Quotation value imputation.** 28 leads have `quotation_sent = 1` but a missing value. Median imputation fills 0, which is unrealistic for a sent quotation; imputing conditionally on `quotation_sent` would be better.
+- **Quotation value imputation.** 21 leads have `quotation_sent = 1` but a missing value. Median imputation fills 0, which is unrealistic for a sent quotation; imputing conditionally on `quotation_sent` would be better.
 - **Threshold objective.** Maximum F1 is a generic objective. The real threshold should be set from the business's actual cost of a missed deal versus a wasted call, and from sales capacity.
 - **Probability calibration.** The probabilities are reasonably calibrated on this data (Brier 0.206) but were not explicitly calibrated, and they will drift if lead behaviour changes.
 - **Feature availability.** Activity features must be snapshotted at prediction time in a real system to avoid leakage.
+- **Prediction point.** The model scores leads mid-funnel (section 5). It is not suitable for scoring brand-new leads with no sales activity yet.
 
 ---
 
@@ -452,8 +479,8 @@ The final selected model is **Logistic Regression**, with a decision threshold o
 
 Final held-out test performance at the decision threshold:
 
-- **Accuracy:** 0.6067
-- **Precision:** 0.5291
-- **Recall:** 0.8697
-- **F1-score:** 0.6580
-- **ROC-AUC:** 0.7317
+- **Accuracy:** 0.6333
+- **Precision:** 0.5543
+- **Recall:** 0.8267
+- **F1-score:** 0.6636
+- **ROC-AUC:** 0.7492

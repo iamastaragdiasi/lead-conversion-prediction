@@ -3,7 +3,7 @@
 A reproducible machine learning pipeline that estimates the probability that a sales lead will convert into a customer, and turns it into a prediction and a Low / Medium / High potential category.
 
 ```text
-Conversion Probability : 66.2%
+Conversion Probability : 69.4%
 Prediction             : Likely to Convert
 Category               : MEDIUM POTENTIAL
 ```
@@ -22,9 +22,9 @@ A business receives many leads and has limited sales time. This project learns f
 | Model selection | Highest 5-fold cross-validated ROC-AUC on the training set |
 | Decision threshold | **0.32** (maximum F1 on out-of-fold training predictions; test set not used) |
 | Raw input features | 14 (33 after encoding) |
-| Dataset | 6,000 cleaned synthetic leads (6,020 raw), 43.5% converted |
-| Test ROC-AUC | 0.7317 |
-| Test recall / precision / F1 at 0.32 | 0.8697 / 0.5291 / 0.6580 |
+| Dataset | 6,000 cleaned synthetic leads (6,020 raw), 43.8% converted |
+| Test ROC-AUC | 0.7492 |
+| Test recall / precision / F1 at 0.32 | 0.8267 / 0.5543 / 0.6636 |
 
 Workflow:
 
@@ -39,9 +39,11 @@ Generate data → Validate & clean → EDA → Leakage review → Stratified 80/
 
 ## Requirements
 
-- Python 3.12+ (developed and tested with Python 3.13; NumPy 2.5 and SciPy 1.18 require 3.12 or newer)
-- Libraries (all versions pinned in `requirements.txt`): pandas, NumPy, scikit-learn, Joblib, SciPy, Matplotlib, Seaborn, Jupyter
-- Optional, for the web API: FastAPI, Uvicorn, Pydantic (also in `requirements.txt`)
+- Python 3.11+ (developed with Python 3.13; also tested on 3.11)
+- Libraries in `requirements.txt`: pandas, NumPy, scikit-learn, Joblib, SciPy, Matplotlib, Seaborn, Jupyter
+  - scikit-learn is pinned to **1.9.1** because the saved model file was trained with it; other versions cannot load it reliably. scikit-learn 1.9 needs Python 3.11 or newer.
+  - The other libraries use minimum versions.
+- Optional, for the web API only: FastAPI, Uvicorn, Pydantic in `requirements-api.txt`
 
 ---
 
@@ -70,6 +72,12 @@ Install the dependencies:
 pip install -r requirements.txt
 ```
 
+Only if you want the optional REST API:
+
+```bash
+pip install -r requirements-api.txt
+```
+
 All commands below are run from the project root.
 
 ---
@@ -79,8 +87,9 @@ All commands below are run from the project root.
 The dataset is **synthetic** and generated locally by `src/generate_data.py` (seed 42), so anyone can recreate it exactly. The generated files are also committed in `data/`.
 
 - **Size:** 6,020 raw records → 6,000 after removing 20 exact duplicates.
-- **Target:** `converted` (1 = converted, 0 = not converted), 43.5% positive.
+- **Target:** `converted` (1 = converted, 0 = not converted), 43.8% positive.
 - **How conversion is generated:** a logistic function of lead source, industry, company size, interactions, follow-ups, response time, quotation sent and value, website visits, previous-customer status, demo attendance and salesperson experience, plus random noise. It is not random numbers.
+- **Funnel relationships between features:** the features are generated as a chain, as in a real sales process — larger companies and website leads have more interactions, interactions drive follow-ups and demo attendance, a demo makes a quotation much more likely (71% vs 29%), bigger companies receive bigger quotations, and experienced salespeople respond faster.
 - **Injected data-quality issues** (to demonstrate cleaning): about 1% missing values in five columns, 10 negative lead ages, 10 negative response times and 20 duplicate rows.
 
 | Categorical features | Numerical features |
@@ -90,6 +99,8 @@ The dataset is **synthetic** and generated locally by `src/generate_data.py` (se
 `company_size` is stored as a band (Small / Medium / Large / Enterprise) rather than an exact head-count, because CRMs usually capture company size as a range and the band is easier for sales staff to enter reliably.
 
 `lead_id` is an identifier and is excluded from modelling.
+
+**Prediction point:** the model scores a lead **mid-funnel**, after the first sales activity, using feature values as of the scoring date (interactions, follow-ups, demo and quotation status so far). It is not designed for brand-new leads with no activity yet. See section 5 of the evaluation report.
 
 ---
 
@@ -120,6 +131,16 @@ The notebook `notebooks/lead_analysis.ipynb` contains the full EDA and runs the 
 ---
 
 ## How to Evaluate
+
+Evaluate the saved model on the held-out test set **without retraining**:
+
+```bash
+python src/evaluate.py
+```
+
+It loads `models/lead_conversion_pipeline.joblib`, rebuilds the same stratified test split, and prints accuracy, precision, recall, F1, ROC-AUC, Brier score and the confusion matrix at the decision threshold (0.32) and at 0.50, plus the actual conversion rate of each potential category. It also checks the results against the metrics saved at training time.
+
+Other evaluation outputs:
 
 - Training prints the comparison table and final metrics to the console.
 - `reports/evaluation_report.md` is the full evaluation: metric definitions, why accuracy is not enough, leakage review, model comparison, confusion matrices, model selection, threshold analysis, feature importance and limitations.
@@ -172,7 +193,7 @@ Previous customer       : No
 Demo attended           : Yes
 Salesperson experience  : 6
 --------------------------------------------
-Conversion Probability  : 66.2%
+Conversion Probability  : 69.4%
 Prediction              : Likely to Convert
 Category                : MEDIUM POTENTIAL
 Decision threshold      : 0.32
@@ -190,6 +211,7 @@ predict_lead({...})   # returns probability, percentage, class, label, threshold
 ### Optional: REST API
 
 ```bash
+pip install -r requirements-api.txt   # once
 uvicorn src.api:app --reload
 ```
 
@@ -203,7 +225,7 @@ Open http://127.0.0.1:8000/docs for the Swagger UI. Endpoints: `GET /`, `GET /he
 | 0.32 – < 0.70 | Medium Potential | Between the threshold and 0.70 |
 | ≥ 0.70 | High Potential | Business convention, **not** statistically derived |
 
-On the test set, High / Medium / Low leads actually converted at 84% / 49% / 20%.
+On the test set, High / Medium / Low leads actually converted at 83% / 47% / 22%.
 
 ---
 
@@ -228,10 +250,12 @@ lead-conversion-prediction/
 │   ├── generate_data.py                   # synthetic data generator
 │   ├── validate_data.py                   # data-quality checks and cleaning
 │   ├── train.py                           # training, comparison, selection, saving
+│   ├── evaluate.py                        # evaluates the saved model on the test set
 │   ├── predictor.py                       # prediction engine (loads saved pipeline)
 │   ├── predict.py                         # command-line predictor
 │   └── api.py                             # optional FastAPI service
-├── requirements.txt
+├── requirements.txt                       # core dependencies
+├── requirements-api.txt                   # optional API dependencies
 └── README.md
 ```
 
@@ -243,33 +267,34 @@ Test set (1,200 leads). Model comparison at the default 0.50 threshold; CV = 5-f
 
 | Model | CV ROC-AUC | Accuracy | Precision | Recall | F1 | ROC-AUC |
 |---|---:|---:|---:|---:|---:|---:|
-| **Logistic Regression** | **0.6985** | 0.6783 | 0.6553 | 0.5498 | 0.5979 | **0.7317** |
-| Decision Tree | 0.6263 | 0.6492 | 0.6292 | 0.4713 | 0.5389 | 0.6630 |
-| Random Forest | 0.6794 | 0.6525 | 0.5897 | 0.6609 | 0.6233 | 0.7239 |
-| Tuned Random Forest | 0.6794 | 0.6525 | 0.5897 | 0.6609 | 0.6233 | 0.7239 |
+| **Logistic Regression** | **0.7415** | 0.6925 | 0.6765 | 0.5695 | 0.6184 | **0.7492** |
+| Decision Tree | 0.6715 | 0.6608 | 0.6261 | 0.5581 | 0.5901 | 0.6977 |
+| Random Forest | 0.7267 | 0.6783 | 0.6257 | 0.6590 | 0.6419 | 0.7434 |
+| Tuned Random Forest | 0.7268 | 0.6717 | 0.6193 | 0.6476 | 0.6331 | 0.7430 |
 
 Final model (Logistic Regression) at the decision threshold of **0.32**:
 
 | Accuracy | Precision | Recall | F1 | ROC-AUC |
 |---:|---:|---:|---:|---:|
-| 0.6067 | 0.5291 | 0.8697 | 0.6580 | 0.7317 |
+| 0.6333 | 0.5543 | 0.8267 | 0.6636 | 0.7492 |
 
-It finds 454 of 522 real buyers (87%). The cost is lower precision: more calls to leads that do not buy. That trade-off is intentional, because a missed deal costs more than an extra call.
+It finds 434 of 525 real buyers (83%). The cost is lower precision: more calls to leads that do not buy. That trade-off is intentional, because a missed deal costs more than an extra call.
 
-Why Logistic Regression: highest cross-validated and test ROC-AUC, almost no overfitting (the Random Forest overfits: train 0.82 vs CV 0.68), best-calibrated probabilities, fully interpretable and very cheap to run. Tuning the Random Forest did not improve it.
+Why Logistic Regression: highest cross-validated and test ROC-AUC, almost no overfitting (the Random Forest overfits: train 0.83 vs CV 0.73), best-calibrated probabilities, fully interpretable and very cheap to run. Tuning the Random Forest did not improve it. At their own thresholds the Random Forests reach a slightly higher test F1 (0.669 vs 0.664), a difference too small to outweigh these advantages.
 
-Most important features (permutation importance): lead source, quotation sent, previous customer, demo attended, response time. Location, lead age and website visits contribute almost nothing.
+Most important features (permutation importance): demo attended, quotation sent, response time, lead source, previous customer. Location and lead age contribute nothing; interactions and website visits contribute almost nothing on their own because their effect runs through follow-ups, demos and quotations.
 
 ---
 
 ## Limitations
 
 - **Synthetic data:** the results reflect the generator's assumptions, not a real market, and are not production performance.
-- **Modest accuracy:** ROC-AUC of about 0.73 gives useful ranking, but many individual predictions will be wrong.
+- **Modest accuracy:** ROC-AUC of about 0.75 gives useful ranking, but many individual predictions will be wrong.
 - **Near-linear data:** the generator is logistic, which favours Logistic Regression; real data may behave differently.
 - **Threshold objective:** 0.32 maximises F1; a real business should set it from the actual cost of a missed deal versus a wasted call.
-- **Quotation value imputation:** 28 leads with a sent quotation have a missing value that is imputed as 0.
+- **Quotation value imputation:** 21 leads with a sent quotation have a missing value that is imputed as 0.
 - **Leakage in real data:** activity features must be captured at prediction time, not after the deal closes.
+- **Prediction point:** leads are scored mid-funnel; brand-new leads with no sales activity are out of scope.
 - **Probabilities** are not explicitly calibrated and will drift if customer behaviour changes.
 
 ---
