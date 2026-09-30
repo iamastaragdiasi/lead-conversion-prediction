@@ -432,6 +432,7 @@ Model                   : Logistic Regression
 python src/generate_data.py    # 6,020 raw records, seed 42
 python src/validate_data.py    # 6,000 cleaned records
 python src/train.py            # trains, compares, saves pipeline + metrics + figures
+python src/evaluate.py         # re-evaluates the saved model on the test set (no retraining)
 python src/predict.py --example
 ```
 
