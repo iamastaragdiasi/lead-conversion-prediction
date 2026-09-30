@@ -9,6 +9,7 @@ FastAPI service (src/api.py).
 from __future__ import annotations
 
 import json
+import math
 from pathlib import Path
 from typing import Any
 
@@ -44,6 +45,29 @@ FEATURES: list[str] = metadata["features"]
 # Chosen during training from out-of-fold predictions on the training set.
 DEPLOYMENT_THRESHOLD: float = float(metadata["decision_threshold"])
 HIGH_POTENTIAL_CUTOFF: float = float(metadata["high_potential_cutoff"])
+
+
+# ============================================================
+# INPUT LIMITS
+# ============================================================
+
+# Plausible business ranges used to reject typos and impossible values.
+# They are deliberately wider than the training data; they are not model limits.
+NUMERIC_LIMITS: dict[str, tuple[float, float]] = {
+    "lead_age_days": (0, 1825),              # up to 5 years
+    "interactions": (0, 100),
+    "followups": (0, 50),
+    "response_time_hours": (0, 720),         # up to 30 days
+    "quotation_sent": (0, 1),
+    "quotation_value": (0, 10_000_000),      # up to INR 1 crore
+    "website_visits": (0, 200),
+    "previous_customer": (0, 1),
+    "demo_attended": (0, 1),
+    "salesperson_experience": (1, 50),       # same rule as validate_data.py
+}
+
+WHOLE_NUMBER_FEATURES = {"lead_age_days", "interactions", "followups", "website_visits"}
+BINARY_FEATURES = ("quotation_sent", "previous_customer", "demo_attended")
 
 
 # ============================================================
@@ -99,13 +123,30 @@ def _validate(lead_data: dict[str, Any]) -> None:
             number = float(value)
         except (TypeError, ValueError):
             raise ValueError(f"'{feature}' must be numeric, got {value!r}") from None
-        if number < 0:
-            raise ValueError(f"'{feature}' cannot be negative, got {number}")
+        if math.isnan(number):
+            continue  # treated as missing and imputed by the pipeline
+        if math.isinf(number):
+            raise ValueError(f"'{feature}' must be a finite number, got {value!r}")
+        low, high = NUMERIC_LIMITS[feature]
+        if not low <= number <= high:
+            raise ValueError(f"'{feature}' must be between {low:g} and {high:g}, got {number:g}")
+        if feature in WHOLE_NUMBER_FEATURES and not number.is_integer():
+            raise ValueError(f"'{feature}' must be a whole number, got {number:g}")
 
-    for feature in ("quotation_sent", "previous_customer", "demo_attended"):
+    # Yes/no flags must be exactly 0 or 1 (0.5 is not a valid answer).
+    for feature in BINARY_FEATURES:
         value = lead_data[feature]
-        if value is not None and int(value) not in (0, 1):
+        if value is not None and float(value) not in (0.0, 1.0):
             raise ValueError(f"'{feature}' must be 0 or 1, got {value!r}")
+
+    # A quotation value only makes sense if a quotation was sent.
+    sent = lead_data["quotation_sent"]
+    quote = lead_data["quotation_value"]
+    if sent is not None and quote is not None and float(sent) == 0 and float(quote) > 0:
+        raise ValueError(
+            "'quotation_value' must be 0 when 'quotation_sent' is 0, "
+            f"got {float(quote):g}"
+        )
 
 
 # ============================================================
