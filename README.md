@@ -132,6 +132,16 @@ The notebook `notebooks/lead_analysis.ipynb` contains the full EDA and runs the 
 
 ## How to Evaluate
 
+Evaluate the saved model on the held-out test set **without retraining**:
+
+```bash
+python src/evaluate.py
+```
+
+It loads `models/lead_conversion_pipeline.joblib`, rebuilds the same stratified test split, and prints accuracy, precision, recall, F1, ROC-AUC, Brier score and the confusion matrix at the decision threshold (0.32) and at 0.50, plus the actual conversion rate of each potential category. It also checks the results against the metrics saved at training time.
+
+Other evaluation outputs:
+
 - Training prints the comparison table and final metrics to the console.
 - `reports/evaluation_report.md` is the full evaluation: metric definitions, why accuracy is not enough, leakage review, model comparison, confusion matrices, model selection, threshold analysis, feature importance and limitations.
 - `reports/metrics.json` holds all the numbers.
@@ -240,6 +250,7 @@ lead-conversion-prediction/
 │   ├── generate_data.py                   # synthetic data generator
 │   ├── validate_data.py                   # data-quality checks and cleaning
 │   ├── train.py                           # training, comparison, selection, saving
+│   ├── evaluate.py                        # evaluates the saved model on the test set
 │   ├── predictor.py                       # prediction engine (loads saved pipeline)
 │   ├── predict.py                         # command-line predictor
 │   └── api.py                             # optional FastAPI service
