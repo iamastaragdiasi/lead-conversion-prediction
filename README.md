@@ -92,6 +92,8 @@ The dataset is **synthetic** and generated locally by `src/generate_data.py` (se
 
 `lead_id` is an identifier and is excluded from modelling.
 
+**Prediction point:** the model scores a lead **mid-funnel**, after the first sales activity, using feature values as of the scoring date (interactions, follow-ups, demo and quotation status so far). It is not designed for brand-new leads with no activity yet. See section 5 of the evaluation report.
+
 ---
 
 ## How to Train
@@ -271,6 +273,7 @@ Most important features (permutation importance): demo attended, quotation sent,
 - **Threshold objective:** 0.32 maximises F1; a real business should set it from the actual cost of a missed deal versus a wasted call.
 - **Quotation value imputation:** 21 leads with a sent quotation have a missing value that is imputed as 0.
 - **Leakage in real data:** activity features must be captured at prediction time, not after the deal closes.
+- **Prediction point:** leads are scored mid-funnel; brand-new leads with no sales activity are out of scope.
 - **Probabilities** are not explicitly calibrated and will drift if customer behaviour changes.
 
 ---
