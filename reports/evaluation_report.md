@@ -435,7 +435,7 @@ python src/train.py            # trains, compares, saves pipeline + metrics + fi
 python src/predict.py --example
 ```
 
-Fixed seeds (`random_state=42`) are used for data generation, the split, cross-validation and all models. All dependency versions are pinned in `requirements.txt` (Python 3.12+). Re-running the scripts reproduces the numbers in this report exactly.
+Fixed seeds (`random_state=42`) are used for data generation, the split, cross-validation and all models. `requirements.txt` pins scikit-learn to 1.9.1 (the version that trained the saved model) and gives minimum versions for the other libraries (Python 3.11+); the exact versions used for this report are listed in its header. Re-running the scripts with those versions reproduces the numbers in this report exactly (verified on Python 3.11 and 3.13). The API dependencies are optional and live in `requirements-api.txt`.
 
 ---
 

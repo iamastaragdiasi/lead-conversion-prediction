@@ -39,9 +39,11 @@ Generate data → Validate & clean → EDA → Leakage review → Stratified 80/
 
 ## Requirements
 
-- Python 3.12+ (developed and tested with Python 3.13; NumPy 2.5 and SciPy 1.18 require 3.12 or newer)
-- Libraries (all versions pinned in `requirements.txt`): pandas, NumPy, scikit-learn, Joblib, SciPy, Matplotlib, Seaborn, Jupyter
-- Optional, for the web API: FastAPI, Uvicorn, Pydantic (also in `requirements.txt`)
+- Python 3.11+ (developed with Python 3.13; also tested on 3.11)
+- Libraries in `requirements.txt`: pandas, NumPy, scikit-learn, Joblib, SciPy, Matplotlib, Seaborn, Jupyter
+  - scikit-learn is pinned to **1.9.1** because the saved model file was trained with it; other versions cannot load it reliably. scikit-learn 1.9 needs Python 3.11 or newer.
+  - The other libraries use minimum versions.
+- Optional, for the web API only: FastAPI, Uvicorn, Pydantic in `requirements-api.txt`
 
 ---
 
@@ -68,6 +70,12 @@ Install the dependencies:
 
 ```bash
 pip install -r requirements.txt
+```
+
+Only if you want the optional REST API:
+
+```bash
+pip install -r requirements-api.txt
 ```
 
 All commands below are run from the project root.
@@ -193,6 +201,7 @@ predict_lead({...})   # returns probability, percentage, class, label, threshold
 ### Optional: REST API
 
 ```bash
+pip install -r requirements-api.txt   # once
 uvicorn src.api:app --reload
 ```
 
@@ -234,7 +243,8 @@ lead-conversion-prediction/
 │   ├── predictor.py                       # prediction engine (loads saved pipeline)
 │   ├── predict.py                         # command-line predictor
 │   └── api.py                             # optional FastAPI service
-├── requirements.txt
+├── requirements.txt                       # core dependencies
+├── requirements-api.txt                   # optional API dependencies
 └── README.md
 ```
 
