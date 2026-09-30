@@ -2,185 +2,185 @@
     "final_model": "Logistic Regression",
     "decision_threshold": 0.32,
     "tuned_random_forest_best_params": {
-        "max_depth": 10,
+        "max_depth": 14,
         "min_samples_leaf": 10,
         "min_samples_split": 10,
         "n_estimators": 300
     },
-    "tuned_random_forest_grid_cv_roc_auc": 0.6794,
+    "tuned_random_forest_grid_cv_roc_auc": 0.7275,
     "models": {
         "logistic_regression": {
             "label": "Logistic Regression",
-            "train_roc_auc": 0.7083,
-            "cv_roc_auc": 0.6985,
+            "train_roc_auc": 0.7494,
+            "cv_roc_auc": 0.7415,
             "cv_threshold": 0.32,
             "test_at_0_50": {
                 "threshold": 0.5,
-                "accuracy": 0.6783,
-                "precision": 0.6553,
-                "recall": 0.5498,
-                "f1": 0.5979,
-                "roc_auc": 0.7317,
-                "brier_score": 0.2064,
+                "accuracy": 0.6925,
+                "precision": 0.6765,
+                "recall": 0.5695,
+                "f1": 0.6184,
+                "roc_auc": 0.7492,
+                "brier_score": 0.1998,
                 "confusion_matrix": [
                     [
-                        527,
-                        151
+                        532,
+                        143
                     ],
                     [
-                        235,
-                        287
+                        226,
+                        299
                     ]
                 ]
             },
             "test_at_own_cv_threshold": {
                 "threshold": 0.32,
-                "accuracy": 0.6067,
-                "precision": 0.5291,
-                "recall": 0.8697,
-                "f1": 0.658,
-                "roc_auc": 0.7317,
-                "brier_score": 0.2064,
+                "accuracy": 0.6333,
+                "precision": 0.5543,
+                "recall": 0.8267,
+                "f1": 0.6636,
+                "roc_auc": 0.7492,
+                "brier_score": 0.1998,
                 "confusion_matrix": [
                     [
-                        274,
-                        404
+                        326,
+                        349
                     ],
                     [
-                        68,
-                        454
+                        91,
+                        434
                     ]
                 ]
             }
         },
         "decision_tree": {
             "label": "Decision Tree",
-            "train_roc_auc": 0.707,
-            "cv_roc_auc": 0.6263,
-            "cv_threshold": 0.2,
+            "train_roc_auc": 0.7519,
+            "cv_roc_auc": 0.6715,
+            "cv_threshold": 0.17,
             "test_at_0_50": {
                 "threshold": 0.5,
-                "accuracy": 0.6492,
-                "precision": 0.6292,
-                "recall": 0.4713,
-                "f1": 0.5389,
-                "roc_auc": 0.663,
-                "brier_score": 0.2269,
+                "accuracy": 0.6608,
+                "precision": 0.6261,
+                "recall": 0.5581,
+                "f1": 0.5901,
+                "roc_auc": 0.6977,
+                "brier_score": 0.2183,
                 "confusion_matrix": [
                     [
-                        533,
-                        145
+                        500,
+                        175
                     ],
                     [
-                        276,
-                        246
+                        232,
+                        293
                     ]
                 ]
             },
             "test_at_own_cv_threshold": {
-                "threshold": 0.2,
-                "accuracy": 0.475,
-                "precision": 0.4506,
-                "recall": 0.9444,
-                "f1": 0.6101,
-                "roc_auc": 0.663,
-                "brier_score": 0.2269,
+                "threshold": 0.17,
+                "accuracy": 0.5233,
+                "precision": 0.4771,
+                "recall": 0.9314,
+                "f1": 0.631,
+                "roc_auc": 0.6977,
+                "brier_score": 0.2183,
                 "confusion_matrix": [
                     [
-                        77,
-                        601
+                        139,
+                        536
                     ],
                     [
-                        29,
-                        493
+                        36,
+                        489
                     ]
                 ]
             }
         },
         "random_forest": {
             "label": "Random Forest",
-            "train_roc_auc": 0.8206,
-            "cv_roc_auc": 0.6794,
-            "cv_threshold": 0.37,
+            "train_roc_auc": 0.832,
+            "cv_roc_auc": 0.7267,
+            "cv_threshold": 0.41,
             "test_at_0_50": {
                 "threshold": 0.5,
-                "accuracy": 0.6525,
-                "precision": 0.5897,
-                "recall": 0.6609,
-                "f1": 0.6233,
-                "roc_auc": 0.7239,
-                "brier_score": 0.2168,
+                "accuracy": 0.6783,
+                "precision": 0.6257,
+                "recall": 0.659,
+                "f1": 0.6419,
+                "roc_auc": 0.7434,
+                "brier_score": 0.2072,
                 "confusion_matrix": [
                     [
-                        438,
-                        240
+                        468,
+                        207
                     ],
                     [
-                        177,
-                        345
+                        179,
+                        346
                     ]
                 ]
             },
             "test_at_own_cv_threshold": {
-                "threshold": 0.37,
-                "accuracy": 0.5525,
-                "precision": 0.4922,
-                "recall": 0.91,
-                "f1": 0.6389,
-                "roc_auc": 0.7239,
-                "brier_score": 0.2168,
+                "threshold": 0.41,
+                "accuracy": 0.6417,
+                "precision": 0.5619,
+                "recall": 0.821,
+                "f1": 0.6672,
+                "roc_auc": 0.7434,
+                "brier_score": 0.2072,
                 "confusion_matrix": [
                     [
-                        188,
-                        490
+                        339,
+                        336
                     ],
                     [
-                        47,
-                        475
+                        94,
+                        431
                     ]
                 ]
             }
         },
         "tuned_random_forest": {
             "label": "Tuned Random Forest",
-            "train_roc_auc": 0.8206,
-            "cv_roc_auc": 0.6794,
-            "cv_threshold": 0.37,
+            "train_roc_auc": 0.8563,
+            "cv_roc_auc": 0.7268,
+            "cv_threshold": 0.42,
             "test_at_0_50": {
                 "threshold": 0.5,
-                "accuracy": 0.6525,
-                "precision": 0.5897,
-                "recall": 0.6609,
-                "f1": 0.6233,
-                "roc_auc": 0.7239,
-                "brier_score": 0.2168,
+                "accuracy": 0.6717,
+                "precision": 0.6193,
+                "recall": 0.6476,
+                "f1": 0.6331,
+                "roc_auc": 0.743,
+                "brier_score": 0.2067,
                 "confusion_matrix": [
                     [
-                        438,
-                        240
+                        466,
+                        209
                     ],
                     [
-                        177,
-                        345
+                        185,
+                        340
                     ]
                 ]
             },
             "test_at_own_cv_threshold": {
-                "threshold": 0.37,
-                "accuracy": 0.5525,
-                "precision": 0.4922,
-                "recall": 0.91,
-                "f1": 0.6389,
-                "roc_auc": 0.7239,
-                "brier_score": 0.2168,
+                "threshold": 0.42,
+                "accuracy": 0.6508,
+                "precision": 0.5716,
+                "recall": 0.8057,
+                "f1": 0.6688,
+                "roc_auc": 0.743,
+                "brier_score": 0.2067,
                 "confusion_matrix": [
                     [
-                        188,
-                        490
+                        358,
+                        317
                     ],
                     [
-                        47,
-                        475
+                        102,
+                        423
                     ]
                 ]
             }
@@ -188,74 +188,74 @@
     },
     "permutation_importance": [
         {
-            "feature": "lead_source",
-            "importance_mean": 0.0576,
-            "importance_std": 0.0076
+            "feature": "demo_attended",
+            "importance_mean": 0.0411,
+            "importance_std": 0.0074
         },
         {
             "feature": "quotation_sent",
-            "importance_mean": 0.0455,
-            "importance_std": 0.0065
-        },
-        {
-            "feature": "previous_customer",
-            "importance_mean": 0.0308,
-            "importance_std": 0.007
-        },
-        {
-            "feature": "demo_attended",
-            "importance_mean": 0.0273,
-            "importance_std": 0.0053
+            "importance_mean": 0.0291,
+            "importance_std": 0.0049
         },
         {
             "feature": "response_time_hours",
-            "importance_mean": 0.0166,
+            "importance_mean": 0.0252,
+            "importance_std": 0.0057
+        },
+        {
+            "feature": "lead_source",
+            "importance_mean": 0.0207,
+            "importance_std": 0.0055
+        },
+        {
+            "feature": "previous_customer",
+            "importance_mean": 0.0196,
             "importance_std": 0.0043
         },
         {
-            "feature": "quotation_value",
-            "importance_mean": 0.0131,
-            "importance_std": 0.0025
-        },
-        {
             "feature": "company_size",
-            "importance_mean": 0.0123,
-            "importance_std": 0.0039
-        },
-        {
-            "feature": "interactions",
-            "importance_mean": 0.0059,
-            "importance_std": 0.0035
+            "importance_mean": 0.009,
+            "importance_std": 0.0042
         },
         {
             "feature": "followups",
-            "importance_mean": 0.0044,
-            "importance_std": 0.0015
+            "importance_mean": 0.0083,
+            "importance_std": 0.0028
+        },
+        {
+            "feature": "quotation_value",
+            "importance_mean": 0.0073,
+            "importance_std": 0.0014
         },
         {
             "feature": "industry",
-            "importance_mean": 0.0035,
-            "importance_std": 0.0035
+            "importance_mean": 0.0045,
+            "importance_std": 0.0025
         },
         {
             "feature": "salesperson_experience",
-            "importance_mean": 0.002,
-            "importance_std": 0.0013
-        },
-        {
-            "feature": "lead_age_days",
-            "importance_mean": 0.0005,
-            "importance_std": 0.001
-        },
-        {
-            "feature": "website_visits",
-            "importance_mean": 0.0,
-            "importance_std": 0.0001
+            "importance_mean": 0.001,
+            "importance_std": 0.0009
         },
         {
             "feature": "location",
-            "importance_mean": -0.0007,
-            "importance_std": 0.0014
+            "importance_mean": 0.0009,
+            "importance_std": 0.0018
+        },
+        {
+            "feature": "website_visits",
+            "importance_mean": 0.0003,
+            "importance_std": 0.0012
+        },
+        {
+            "feature": "interactions",
+            "importance_mean": 0.0002,
+            "importance_std": 0.0018
+        },
+        {
+            "feature": "lead_age_days",
+            "importance_mean": -0.0004,
+            "importance_std": 0.0003
         }
     ]
 }

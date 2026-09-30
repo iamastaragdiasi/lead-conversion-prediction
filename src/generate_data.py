@@ -68,20 +68,73 @@ def generate_dataset(n_records=N_RECORDS, seed=RANDOM_SEED):
 
     lead_age_days = rng.integers(1, 121, size=n_records)
 
+    # ---------------------------------------------------------
+    # Sales-funnel features
+    #
+    # These are generated as a chain rather than independently,
+    # because in a real sales process they depend on each other:
+    #
+    #   company size / lead source -> website visits, interactions
+    #   interactions               -> follow-ups, demo attendance
+    #   demo attended              -> quotation sent
+    #   company size               -> quotation value
+    #   salesperson experience     -> faster first response
+    # ---------------------------------------------------------
+
+    size_index = np.array(
+        [
+            {"Small": 0, "Medium": 1, "Large": 2, "Enterprise": 3}[x]
+            for x in company_size
+        ]
+    )
+
+    previous_customer = rng.binomial(
+        1,
+        0.18,
+        size=n_records,
+    )
+
+    salesperson_experience = rng.integers(
+        1,
+        16,
+        size=n_records,
+    )
+
+    # Website leads and returning customers browse the site more.
+    website_visits = np.clip(
+        rng.poisson(
+            lam=3.0
+            + 2.0 * (lead_source == "Website")
+            + 1.0 * previous_customer,
+            size=n_records,
+        ),
+        0,
+        40,
+    )
+
+    # Larger, more engaged companies have more sales conversations.
     interactions = np.clip(
-        rng.poisson(lam=5, size=n_records),
+        rng.poisson(
+            lam=3.3 + 0.6 * size_index + 0.25 * website_visits,
+            size=n_records,
+        ),
         0,
         30,
     )
 
+    # Follow-ups grow with the number of interactions.
     followups = np.clip(
-        rng.poisson(lam=2, size=n_records),
+        rng.poisson(
+            lam=0.8 + 0.25 * interactions,
+            size=n_records,
+        ),
         0,
         12,
     )
 
+    # Experienced salespeople respond faster (median ~18 hours).
     response_time_hours = rng.lognormal(
-        mean=np.log(18),
+        mean=np.log(18) - 0.04 * (salesperson_experience - 8),
         sigma=0.7,
         size=n_records,
     )
@@ -91,17 +144,26 @@ def generate_dataset(n_records=N_RECORDS, seed=RANDOM_SEED):
         168,
     )
 
+    # Engaged leads and returning customers are more likely to take a demo.
+    demo_attended = rng.binomial(
+        1,
+        sigmoid(-2.0 + 0.22 * interactions + 0.5 * previous_customer),
+    )
+
+    # A quotation usually follows a demo.
     quotation_sent = rng.binomial(
         1,
-        0.42,
-        size=n_records,
+        sigmoid(-1.2 + 1.6 * demo_attended + 0.08 * interactions),
     )
+
+    # Bigger companies receive bigger quotations.
+    size_quote_median = np.array([45000, 70000, 110000, 200000])[size_index]
 
     quotation_value = np.where(
         quotation_sent == 1,
         rng.lognormal(
-            mean=np.log(75000),
-            sigma=0.8,
+            mean=np.log(size_quote_median),
+            sigma=0.6,
             size=n_records,
         ),
         0,
@@ -111,30 +173,6 @@ def generate_dataset(n_records=N_RECORDS, seed=RANDOM_SEED):
         quotation_value,
         0,
         1_000_000,
-    )
-
-    website_visits = np.clip(
-        rng.poisson(lam=4, size=n_records),
-        0,
-        40,
-    )
-
-    previous_customer = rng.binomial(
-        1,
-        0.18,
-        size=n_records,
-    )
-
-    demo_attended = rng.binomial(
-        1,
-        0.35,
-        size=n_records,
-    )
-
-    salesperson_experience = rng.integers(
-        1,
-        16,
-        size=n_records,
     )
 
     # ---------------------------------------------------------
