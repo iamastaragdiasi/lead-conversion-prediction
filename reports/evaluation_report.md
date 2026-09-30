@@ -93,6 +93,14 @@ Key findings:
 
 ## 5. Data Leakage Analysis
 
+### Prediction point
+
+The model scores a lead **mid-funnel**, once the first sales activity has happened: the lead has been contacted, and demo and quotation status are known up to that date. It is **not** designed to score a brand-new lead at the moment it is created, because at that point `interactions`, `followups`, `demo_attended`, `quotation_sent` and `quotation_value` do not exist yet (they would all be 0). A lead should be re-scored as new activity is recorded.
+
+This choice defines what "leakage" means for this project: every feature must be the value **as of the scoring date**, never a value recorded after the outcome was known. A model for brand-new leads would need to be trained only on the features known at creation (`lead_source`, `industry`, `location`, `company_size`, `previous_customer`).
+
+### Feature review
+
 A feature leaks if its value is only known **after** the conversion outcome. Each feature was reviewed for when it becomes available:
 
 | Feature | Known before the outcome? | Decision |
@@ -440,6 +448,7 @@ Fixed seeds (`random_state=42`) are used for data generation, the split, cross-v
 - **Threshold objective.** Maximum F1 is a generic objective. The real threshold should be set from the business's actual cost of a missed deal versus a wasted call, and from sales capacity.
 - **Probability calibration.** The probabilities are reasonably calibrated on this data (Brier 0.206) but were not explicitly calibrated, and they will drift if lead behaviour changes.
 - **Feature availability.** Activity features must be snapshotted at prediction time in a real system to avoid leakage.
+- **Prediction point.** The model scores leads mid-funnel (section 5). It is not suitable for scoring brand-new leads with no sales activity yet.
 
 ---
 
