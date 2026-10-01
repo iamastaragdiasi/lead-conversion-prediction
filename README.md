@@ -1,5 +1,10 @@
 # Lead Conversion Prediction Engine
 
+**Author:** Astarag Diasi — AI/ML Intern, Codly India Pvt. Ltd.  
+**Task:** AI/ML Intern Project Task 01 — Lead Conversion Prediction Engine  
+**Submitted:** 1 October 2026\
+**AI assistance disclosure:** Claude (Anthropic) was used as a coding assistant during development; some commits are attributed to it. All design decisions, methodology and results were reviewed and are understood by the author. No AI/LLM API is used inside the project itself.
+
 A reproducible machine learning pipeline that estimates the probability that a sales lead will convert into a customer, and turns it into a prediction and a Low / Medium / High potential category.
 
 ```text
