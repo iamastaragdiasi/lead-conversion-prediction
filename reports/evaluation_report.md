@@ -373,7 +373,7 @@ Figures: `permutation_importance.png`, `logistic_regression_coefficients.png`, `
 | `0.32 – < 0.70` | Medium Potential | Between the threshold and the high cut-off |
 | `>= 0.70` | High Potential | **Business convention**, not statistically derived |
 
-The Low/Medium boundary is the threshold from section 10. The 0.70 boundary is a practical convention for "call first" leads. The test-set check in section 11 shows it separates an 84%-converting group, but it should be re-set with real business data. The categories are not presented as scientifically established thresholds.
+The Low/Medium boundary is the threshold from section 10. The 0.70 boundary is a practical convention for "call first" leads. The test-set check in section 11 shows it separates an 83%-converting group, but it should be re-set with real business data. The categories are not presented as scientifically established thresholds.
 
 What a prediction of, for example, 78% means: among many leads with similar characteristics, about 78 in 100 would be expected to convert **if the future resembles the training data**. It is a prioritisation signal, not a guarantee for an individual lead.
 
@@ -443,11 +443,11 @@ Fixed seeds (`random_state=42`) are used for data generation, the split, cross-v
 ## 17. Limitations
 
 - **Synthetic data.** The relationships (including the funnel chain between features) were designed by the generator, so the results describe those assumptions, not a real market. The metrics are not production performance.
-- **Modest predictive power.** ROC-AUC of about 0.73 means useful ranking but many individual errors. The noise built into the generator limits how good any model can be.
+- **Modest predictive power.** ROC-AUC of about 0.75 means useful ranking but many individual errors. The noise built into the generator limits how good any model can be.
 - **Near-linear data.** The generator is logistic, which favours Logistic Regression. Real CRM data may contain non-linear effects where tree ensembles perform better.
 - **Quotation value imputation.** 21 leads have `quotation_sent = 1` but a missing value. Median imputation fills 0, which is unrealistic for a sent quotation; imputing conditionally on `quotation_sent` would be better.
 - **Threshold objective.** Maximum F1 is a generic objective. The real threshold should be set from the business's actual cost of a missed deal versus a wasted call, and from sales capacity.
-- **Probability calibration.** The probabilities are reasonably calibrated on this data (Brier 0.206) but were not explicitly calibrated, and they will drift if lead behaviour changes.
+- **Probability calibration.** The probabilities are reasonably calibrated on this data (Brier 0.1998) but were not explicitly calibrated, and they will drift if lead behaviour changes.
 - **Feature availability.** Activity features must be snapshotted at prediction time in a real system to avoid leakage.
 - **Prediction point.** The model scores leads mid-funnel (section 5). It is not suitable for scoring brand-new leads with no sales activity yet.
 
