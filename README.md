@@ -300,7 +300,7 @@ Most important features (permutation importance): demo attended, quotation sent,
 - **Quotation value imputation:** 21 leads with a sent quotation have a missing value that is imputed as 0.
 - **Leakage in real data:** activity features must be captured at prediction time, not after the deal closes.
 - **Prediction point:** leads are scored mid-funnel; brand-new leads with no sales activity are out of scope.
-- **Probabilities** are not explicitly calibrated and will drift if customer behaviour changes.
+- **Probabilities** are not explicitly recalibrated. Measured calibration is good on synthetic data (test ECE 0.041, see `reports/calibration_analysis.md`), but it will drift if customer behaviour changes.
 
 ---
 
@@ -308,7 +308,7 @@ Most important features (permutation importance): demo attended, quotation sent,
 
 - Real, time-stamped CRM data with a time-based validation split.
 - Threshold chosen from business costs and sales capacity.
-- Probability calibration and calibration plots.
+- Recalibration (e.g. CalibratedClassifierCV) and calibration monitoring on real data.
 - Gradient boosting comparison on real data.
 - Model versioning, monitoring, data-drift detection and scheduled retraining.
 - CRM integration for batch scoring, and API authentication.
