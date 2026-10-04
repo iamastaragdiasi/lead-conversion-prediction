@@ -348,4 +348,4 @@ See `reports/review_addendum.md` for these items:
 
 ## AI Assistance Disclosure
 
-Claude (Anthropic), used through its chat interface, assisted with code review, the leakage and calibration analysis scripts, tests and documentation wording. Some earlier commits list Claude as author for that reason. The project itself calls no AI or LLM API. I reviewed, ran and verified all code and results, and I take responsibility for the submission.
+Claude (Anthropic), used through its chat interface, assisted with code review, the leakage and calibration analysis scripts, tests and documentation wording. The project itself calls no AI or LLM API. I reviewed, ran and verified all code and results, and I take responsibility for the submission.
