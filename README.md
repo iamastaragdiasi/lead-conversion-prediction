@@ -285,7 +285,7 @@ Final model (Logistic Regression) at the decision threshold of **0.32**:
 
 It finds 434 of 525 real buyers (83%). The cost is lower precision: more calls to leads that do not buy. That trade-off is intentional, because a missed deal costs more than an extra call.
 
-Why Logistic Regression: highest cross-validated and test ROC-AUC, almost no overfitting (the Random Forest overfits: train 0.83 vs CV 0.73), best-calibrated probabilities, fully interpretable and very cheap to run. Tuning the Random Forest did not improve it. At their own thresholds the Random Forests reach a slightly higher test F1 (0.669 vs 0.664), a difference too small to outweigh these advantages.
+Why Logistic Regression: highest cross-validated and test ROC-AUC, almost no overfitting (the Random Forest overfits: train 0.83 vs CV 0.73), probabilities whose calibration is measured in `reports/calibration_analysis.md`, fully interpretable and very cheap to run. Tuning the Random Forest did not improve it. At their own thresholds the Random Forests reach a slightly higher test F1 (0.669 vs 0.664), a difference too small to outweigh these advantages.
 
 Most important features (permutation importance): demo attended, quotation sent, response time, lead source, previous customer. Location and lead age contribute nothing; interactions and website visits contribute almost nothing on their own because their effect runs through follow-ups, demos and quotations.
 
@@ -326,3 +326,26 @@ Python · pandas · NumPy · scikit-learn · Joblib · Matplotlib · Seaborn · 
 - No OpenAI, Gemini, Claude or other external LLM APIs.
 - No paid AI APIs or company-provided API keys.
 - No proprietary or confidential Codly data; all data is synthetic and generated locally.
+
+<!-- review-addendum -->
+## Additional Analysis and Verification
+
+| What | Command | Output |
+|---|---|---|
+| Leakage experiment and feature-availability review | `python src/leakage_demo.py` | `reports/leakage_demo.md` |
+| Calibration and cost-based threshold table | `python src/calibration_analysis.py` | `reports/calibration_analysis.md` |
+| Automated tests | `pip install -r requirements-dev.txt` then `pytest -q` | 8 tests |
+| Model integrity check | `python src/hash_model.py --check` | hash match |
+| Exact reproducible environment | `pip install -r requirements.lock.txt` | pinned versions |
+
+See `reports/review_addendum.md` for these items:
+- Why the conversion rate is 43.8%.
+- Deviations from the approach document.
+- The known `quotation_value` imputation issue.
+- Model-file security.
+
+**Security note:** `.joblib` files execute code when loaded. Only load model files from a trusted source.
+
+## AI Assistance Disclosure
+
+Claude (Anthropic), used through its chat interface, assisted with code review, the leakage and calibration analysis scripts, tests and documentation wording. Some earlier commits list Claude as author for that reason. The project itself calls no AI or LLM API. I reviewed, ran and verified all code and results, and I take responsibility for the submission.
