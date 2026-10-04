@@ -346,6 +346,6 @@ See `reports/review_addendum.md` for these items:
 
 **Security note:** `.joblib` files execute code when loaded. Only load model files from a trusted source.
 
-## AI Assistance Disclosure
+## AI Assistance
 
-Claude (Anthropic), used through its chat interface, assisted with code review, the leakage and calibration analysis scripts, tests and documentation wording. The project itself calls no AI or LLM API. I reviewed, ran and verified all code and results, and I take responsibility for the submission.
+I used Claude (Anthropic) as a coding assistant during development, for code review, drafting the leakage and calibration analysis scripts and tests, and editing documentation. I reviewed, ran and verified all code and results, and I can explain every part of the project. The project itself does not call any AI or LLM API.
